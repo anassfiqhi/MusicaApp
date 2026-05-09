@@ -10,6 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "prebuild": "expo prebuild --clean",
+    "prebuild:android": "expo prebuild --platform android --clean",
+    "prebuild:ios": "expo prebuild --platform ios --clean",
     "android:release": "expo run:android --variant release",
     "ios:release": "expo run:ios --configuration Release"
   },

@@ -32,9 +32,9 @@ export const PLAYLIST: Track[] = [
   {
     id: 'vem-sem-medo-1',
     title: 'Vem Sem Medo',
-    artist: 'Unknown',
+    artist: 'MC MN, DJ L & DJ Guuga',
     audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/VEM%20SEM%20MEDO.mp3' },
-    artwork: require('../assets/images/playlist/album_art_copy.png'),
+    artwork: require('../assets/images/playlist/vem_sem_medo_album_art.jpg'),
     gradientColors: ['#120828', '#1e0f3e', '#000000'],
   },
   {
@@ -63,6 +63,46 @@ export const PLAYLIST: Track[] = [
     artwork: require('../assets/images/playlist/hello_album_art.jpg'),
     gradientColors: ['#1a0a0a', '#2d0a0a', '#000000'],
     lyrics: helloLyrics,
+  },
+  {
+    id: 'montagem-mandela-1',
+    title: 'Montagem Mandela',
+    artist: 'MXZI, Dj Samir & volkz',
+    audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/MONTAGEM%20MANDELA.mp3' },
+    artwork: require('../assets/images/playlist/montagem_mandela_album_art.jpg'),
+    gradientColors: ['#0a1a2e', '#0d2b45', '#000000'],
+  },
+  {
+    id: 'montagem-santa-fe-2-1',
+    title: 'Montagem Santa Fe 2',
+    artist: 'qaraqshy & Dj B7 o Piranhão',
+    audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/MONTAGEM%20SANTA%20FE%202.mp3' },
+    artwork: require('../assets/images/playlist/montagem_santa_fe_2_album_art.jpg'),
+    gradientColors: ['#1a0e2e', '#2b1a45', '#000000'],
+  },
+  {
+    id: 'montagem-xonada-1',
+    title: 'Montagem Xonada',
+    artist: 'MXZI, Dj Samir & DJ Javi26',
+    audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/MONTAGEM%20XONADA.mp3' },
+    artwork: require('../assets/images/playlist/montagem_xonada_album_art.jpg'),
+    gradientColors: ['#1a0a1a', '#2d1a0d', '#000000'],
+  },
+  {
+    id: 'taka-la-dentro-1',
+    title: 'Taka La Dentro',
+    artist: 'SEKIMANE, shonci & Mc Gw',
+    audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/TAKA%20LA%20DENTRO.mp3' },
+    artwork: require('../assets/images/playlist/taka_la_dentro_album_art.jpg'),
+    gradientColors: ['#0a1a0a', '#0d2b1a', '#000000'],
+  },
+  {
+    id: 'vai-cair-1',
+    title: 'Vai Cair',
+    artist: 'DJ Asul',
+    audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/VAI%20CAIR.mp3' },
+    artwork: require('../assets/images/playlist/vai_cair_album_art.jpg'),
+    gradientColors: ['#1a0a0a', '#2e1a00', '#000000'],
   },
 ];
 

@@ -70,7 +70,7 @@ export const PLAYLIST: Track[] = [
     artist: 'MXZI, Dj Samir & volkz',
     audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/MONTAGEM%20MANDELA.mp3' },
     artwork: require('../assets/images/playlist/montagem_mandela_album_art.jpg'),
-    gradientColors: ['#0a1a2e', '#0d2b45', '#000000'],
+    gradientColors: ['#1a3330', '#0d2220', '#000000'],
   },
   {
     id: 'montagem-santa-fe-2-1',
@@ -78,7 +78,7 @@ export const PLAYLIST: Track[] = [
     artist: 'qaraqshy & Dj B7 o Piranhão',
     audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/MONTAGEM%20SANTA%20FE%202.mp3' },
     artwork: require('../assets/images/playlist/montagem_santa_fe_2_album_art.jpg'),
-    gradientColors: ['#1a0e2e', '#2b1a45', '#000000'],
+    gradientColors: ['#3d2010', '#28150a', '#000000'],
   },
   {
     id: 'montagem-xonada-1',
@@ -86,7 +86,7 @@ export const PLAYLIST: Track[] = [
     artist: 'MXZI, Dj Samir & DJ Javi26',
     audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/MONTAGEM%20XONADA.mp3' },
     artwork: require('../assets/images/playlist/montagem_xonada_album_art.jpg'),
-    gradientColors: ['#1a0a1a', '#2d1a0d', '#000000'],
+    gradientColors: ['#2a1f40', '#1c1430', '#000000'],
   },
   {
     id: 'taka-la-dentro-1',
@@ -94,7 +94,7 @@ export const PLAYLIST: Track[] = [
     artist: 'SEKIMANE, shonci & Mc Gw',
     audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/TAKA%20LA%20DENTRO.mp3' },
     artwork: require('../assets/images/playlist/taka_la_dentro_album_art.jpg'),
-    gradientColors: ['#0a1a0a', '#0d2b1a', '#000000'],
+    gradientColors: ['#261c18', '#18110e', '#000000'],
   },
   {
     id: 'vai-cair-1',
@@ -102,7 +102,7 @@ export const PLAYLIST: Track[] = [
     artist: 'DJ Asul',
     audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/VAI%20CAIR.mp3' },
     artwork: require('../assets/images/playlist/vai_cair_album_art.jpg'),
-    gradientColors: ['#1a0a0a', '#2e1a00', '#000000'],
+    gradientColors: ['#1e2530', '#131820', '#000000'],
   },
 ];
 

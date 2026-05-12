@@ -3,6 +3,10 @@ import { LYRICS as medellinLyrics } from './lyrics/una-noche-en-medellin';
 import { LYRICS as resenhaLyrics } from './lyrics/resenha-na-laje';
 import { LYRICS as hawaiLyrics } from './lyrics/hawai';
 import { LYRICS as helloLyrics } from './lyrics/hello';
+import { LYRICS as montagemSantaFe2Lyrics } from './lyrics/montagem-santa-fe-2';
+import { LYRICS as montagemXonadaLyrics } from './lyrics/montagem-xonada';
+import { LYRICS as takaLaDentroLyrics } from './lyrics/taka-la-dentro';
+import { LYRICS as vaiCairLyrics } from './lyrics/vai-cair';
 
 export interface Lyric {
   time: number;
@@ -79,6 +83,7 @@ export const PLAYLIST: Track[] = [
     audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/MONTAGEM%20SANTA%20FE%202.mp3' },
     artwork: require('../assets/images/playlist/montagem_santa_fe_2_album_art.jpg'),
     gradientColors: ['#3d2010', '#28150a', '#000000'],
+    lyrics: montagemSantaFe2Lyrics,
   },
   {
     id: 'montagem-xonada-1',
@@ -87,6 +92,7 @@ export const PLAYLIST: Track[] = [
     audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/MONTAGEM%20XONADA.mp3' },
     artwork: require('../assets/images/playlist/montagem_xonada_album_art.jpg'),
     gradientColors: ['#2a1f40', '#1c1430', '#000000'],
+    lyrics: montagemXonadaLyrics,
   },
   {
     id: 'taka-la-dentro-1',
@@ -95,6 +101,7 @@ export const PLAYLIST: Track[] = [
     audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/TAKA%20LA%20DENTRO.mp3' },
     artwork: require('../assets/images/playlist/taka_la_dentro_album_art.jpg'),
     gradientColors: ['#261c18', '#18110e', '#000000'],
+    lyrics: takaLaDentroLyrics,
   },
   {
     id: 'vai-cair-1',
@@ -103,6 +110,7 @@ export const PLAYLIST: Track[] = [
     audioSource: { uri: 'https://bucket-production-1618.up.railway.app/musica-app/track/VAI%20CAIR.mp3' },
     artwork: require('../assets/images/playlist/vai_cair_album_art.jpg'),
     gradientColors: ['#1e2530', '#131820', '#000000'],
+    lyrics: vaiCairLyrics,
   },
 ];
 

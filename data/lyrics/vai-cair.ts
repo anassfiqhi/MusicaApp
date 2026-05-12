@@ -1,0 +1,28 @@
+import { Lyric } from '../trackData';
+
+export const LYRICS: Lyric[] = [
+  { time: 0.17,  text: 'As janelas choram poeira' },
+  { time: 3.95,  text: 'Os relógios giram em vão' },
+  { time: 7.69,  text: 'Cada segundo é uma esteira' },
+  { time: 11.63, text: 'Ainda empurra pro chão' },
+  { time: 14.07, text: 'Tudo vai cair' },
+  { time: 21.66, text: 'Tudo vai cair' },
+  { time: 28.95, text: 'Tudo vai cair' },
+  { time: 31.03, text: 'Não tem saída' },
+  { time: 32.85, text: 'Tudo vai cair' },
+  { time: 34.84, text: 'Sem despedida' },
+  { time: 36.50, text: 'Tudo vai cair' },
+  { time: 38.57, text: 'Já começou' },
+  { time: 40.37, text: 'Tudo vai cair' },
+  { time: 43.91, text: 'Tudo vai cair' },
+  { time: 51.58, text: 'Tudo vai cair' },
+  { time: 59.05, text: 'Tudo vai cair' },
+  { time: 61.11, text: 'Não tem saída' },
+  { time: 62.73, text: 'Tudo vai cair' },
+  { time: 64.81, text: 'Sem despedida' },
+  { time: 66.57, text: 'Tudo vai cair' },
+  { time: 68.59, text: 'Já começou' },
+  { time: 70.29, text: 'Tudo vai cair' },
+  { time: 74.09, text: 'Tudo vai cair' },
+  { time: 81.53, text: 'Tudo vai cair' },
+];

@@ -1,50 +1,116 @@
-# Welcome to your Expo app 👋
+# Musica
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A Spotify-style music player built with Expo and React Native.
 
-## Get started
+## Features
 
-1. Install dependencies
+- Full-screen player with dynamic per-track gradient backgrounds
+- Synchronized scrolling lyrics
+- Mini player persistent across screens
+- Background audio playback with lock screen controls
+- Prev / next track navigation with auto-advance on finish
+- Responsive layout — works on phone and tablet
+- Dark mode support
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+| Layer | Library |
+|---|---|
+| Framework | Expo 54 / React Native 0.81 |
+| Navigation | Expo Router (file-based) |
+| Audio | expo-audio |
+| Animations | React Native Reanimated 4 |
+| Gradients | expo-linear-gradient |
+| Images | expo-image |
+| Language | TypeScript / React 19 |
+| Package manager | pnpm |
 
-   ```bash
-   npx expo start
-   ```
+## Project Structure
 
-In the output, you'll find options to open the app in a
+```
+app/
+  (tabs)/
+    index.tsx       Home tab
+    explore.tsx     Explore tab
+  player.tsx        Full-screen player (fullScreenModal)
+  _layout.tsx       Root layout + TrackPlayerProvider
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+components/
+  AlbumArt.tsx      Animated artwork with entry animation
+  PlayerControls.tsx Playback bar, seek slider, prev/next
+  LyricsView.tsx    Time-synced lyrics list
+  MiniPlayer.tsx    Persistent bottom player strip
+  Header.tsx        Back button header
+  TrackDetails.tsx  Title + artist display
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+context/
+  TrackPlayerContext.tsx  Global player state via useTrackPlayer
 
-## Get a fresh project
+data/
+  trackData.ts      Track list (id, title, artist, audioSource, artwork, gradient, lyrics)
+  lyrics/           Per-track lyric files with timestamps
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+hooks/
+  useTrackPlayer.ts Audio engine — playback, queue, lock screen metadata
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Getting Started
 
-## Learn more
+```bash
+pnpm install
+pnpm start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Run on a specific platform:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+pnpm ios       # iOS simulator
+pnpm android   # Android emulator
+pnpm web       # Web browser
+```
 
-## Join the community
+## Adding Tracks
 
-Join our community of developers creating universal apps.
+Add an entry to `data/trackData.ts`:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```ts
+{
+  id: 'unique-id',
+  title: 'Track Title',
+  artist: 'Artist Name',
+  audioSource: { uri: 'https://your-cdn.com/track.mp3' },
+  artwork: require('../assets/images/playlist/your_art.jpg'),
+  gradientColors: ['#1a0a0a', '#2d0a0a', '#000000'],
+  lyrics: optionalLyricsArray,  // see data/lyrics/ for format
+}
+```
+
+## Adding Lyrics
+
+Create a file in `data/lyrics/your-track.ts`:
+
+```ts
+export const LYRICS = [
+  { time: 0,    text: 'First line at 0 seconds' },
+  { time: 14.5, text: 'Second line at 14.5 seconds' },
+  // ...
+];
+```
+
+Time values are in seconds and must be in ascending order.
+
+## Audio Hosting
+
+Track audio files are hosted on Railway at `bucket-production-1618.up.railway.app`. Any publicly accessible HTTPS URL works as `audioSource.uri`.
+
+## Build
+
+```bash
+# iOS
+pnpm build:ios
+
+# Android
+pnpm build:android
+```
+
+Both commands run `expo prebuild` followed by a release build.

@@ -12,7 +12,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen
             name="player"
-            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
           />
         </Stack>
       </TrackPlayerProvider>

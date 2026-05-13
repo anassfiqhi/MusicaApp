@@ -9,11 +9,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTrackPlayerContext } from '../context/TrackPlayerContext';
 
 export default function MiniPlayer() {
-  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { currentTrack, status, handlePlayPause, goToNext } = useTrackPlayerContext();
   const isWide = width >= 768;
@@ -21,7 +19,7 @@ export default function MiniPlayer() {
   const progress = status.duration > 0 ? status.currentTime / status.duration : 0;
 
   return (
-    <View style={[styles.wrapper, { paddingBottom: insets.bottom > 0 ? insets.bottom : 8 }]}>
+    <View style={styles.wrapper}>
       <TouchableOpacity
         style={[styles.container, isWide && styles.containerWide]}
         onPress={() => router.push('/player')}

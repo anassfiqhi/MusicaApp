@@ -1,112 +1,160 @@
+import { searchTracks, type SpotifyTrack } from '@/services/api';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+function formatDuration(ms: number) {
+  const m = Math.floor(ms / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
-export default function TabTwoScreen() {
+export default function ExploreScreen() {
+  const insets = useSafeAreaInsets();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SpotifyTrack[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+
+  const handleSearch = useCallback(async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setSearched(true);
+    try {
+      const tracks = await searchTracks(query.trim());
+      setResults(tracks);
+    } finally {
+      setLoading(false);
+    }
+  }, [query]);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+
+      {/* ── Search Bar ── */}
+      <View style={styles.searchBar}>
+        <TextInput
+          style={styles.input}
+          placeholder="Artists, songs, or podcasts"
+          placeholderTextColor="#9B9B9B"
+          value={query}
+          onChangeText={setQuery}
+          onSubmitEditing={handleSearch}
+          returnKeyType="search"
+          autoCorrect={false}
+          autoCapitalize="none"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
+        {query.length > 0 && (
+          <TouchableOpacity onPress={() => { setQuery(''); setResults([]); setSearched(false); }}>
+            <Text style={styles.clearBtn}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* ── Results ── */}
+      {loading ? (
+        <ActivityIndicator color="#1DB954" style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={results}
+          keyExtractor={(item, i) => `${item.id}-${i}`}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={
+            searched && !loading ? (
+              <Text style={styles.empty}>No results for &quot;{query}&quot;</Text>
+            ) : null
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.trackRow} activeOpacity={0.7}>
+              <Image source={{ uri: item.artworkUrl }} style={styles.trackArt} />
+              <View style={styles.trackInfo}>
+                <Text style={styles.trackName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.trackMeta} numberOfLines={1}>
+                  {item.artists.join(', ')} · {item.albumName}
+                </Text>
+              </View>
+              <Text style={styles.duration}>{formatDuration(item.durationMs)}</Text>
+            </TouchableOpacity>
+          )}
         />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: '#121212',
   },
-  titleContainer: {
+  searchBar: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 16,
+    paddingHorizontal: 12,
+    height: 44,
+  },
+  input: {
+    flex: 1,
+    color: '#121212',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  clearBtn: {
+    color: '#9B9B9B',
+    fontSize: 16,
+    paddingLeft: 8,
+  },
+  list: {
+    paddingBottom: 120,
+  },
+  empty: {
+    color: '#9B9B9B',
+    textAlign: 'center',
+    marginTop: 40,
+    fontSize: 15,
+  },
+  trackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 12,
+  },
+  trackArt: {
+    width: 50,
+    height: 50,
+    borderRadius: 4,
+    backgroundColor: '#282828',
+  },
+  trackInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  trackName: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  trackMeta: {
+    color: '#9B9B9B',
+    fontSize: 12,
+  },
+  duration: {
+    color: '#9B9B9B',
+    fontSize: 13,
   },
 });

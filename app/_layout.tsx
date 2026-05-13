@@ -9,7 +9,7 @@ export default function RootLayout() {
       <TrackPlayerProvider>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
+          <Stack.Screen name="(tabs)" />
           <Stack.Screen
             name="player"
             options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}

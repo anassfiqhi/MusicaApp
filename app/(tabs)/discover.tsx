@@ -1,5 +1,8 @@
+import { FEED_SECTIONS, getPlaylist, type FeedSection, type SpotifyTrack } from '@/services/api';
+import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
+import { router } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,7 +13,6 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getFeed, getPlaylist, type FeedSection, type SpotifyTrack } from '@/services/api';
 
 function formatDuration(ms: number) {
   const m = Math.floor(ms / 60000);
@@ -20,25 +22,20 @@ function formatDuration(ms: number) {
 
 export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
-  const [sections, setSections] = useState<FeedSection[]>([]);
+  const { playSpotifyTrack } = useTrackPlayerContext();
   const [topTracks, setTopTracks] = useState<SpotifyTrack[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [feed, tracks] = await Promise.all([
-          getFeed(),
-          getPlaylist('37i9dQZEVXbMDoHDwVN2tF', 15),
-        ]);
-        setSections(feed);
-        setTopTracks(tracks);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    getPlaylist('37i9dQZEVXbMDoHDwVN2tF', 15)
+      .then(setTopTracks)
+      .finally(() => setLoading(false));
   }, []);
+
+  const handleTrackPress = useCallback((track: SpotifyTrack) => {
+    playSpotifyTrack(track);
+    router.push('/player');
+  }, [playSpotifyTrack]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -46,40 +43,36 @@ export default function DiscoverScreen() {
 
         <Text style={styles.heading}>Discover</Text>
 
-        {loading ? (
-          <ActivityIndicator color="#1DB954" style={{ marginTop: 40 }} />
-        ) : (
-          <>
-            <Text style={styles.sectionTitle}>Featured</Text>
-            <FlatList
-              data={sections}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.playlist_id}
-              contentContainerStyle={styles.horizontalList}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.playlistCard} activeOpacity={0.8}>
-                  <Image source={{ uri: item.cover }} style={styles.playlistCover} />
-                  <Text style={styles.playlistTitle} numberOfLines={1}>{item.title}</Text>
-                </TouchableOpacity>
-              )}
-            />
+        <Text style={styles.sectionTitle}>Featured</Text>
+        <FlatList
+          data={FEED_SECTIONS}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.playlist_id}
+          contentContainerStyle={styles.horizontalList}
+          renderItem={({ item }: { item: FeedSection }) => (
+            <TouchableOpacity style={styles.playlistCard} activeOpacity={0.8}>
+              <Image source={{ uri: item.cover }} style={styles.playlistCover} />
+              <Text style={styles.playlistTitle} numberOfLines={1}>{item.title}</Text>
+            </TouchableOpacity>
+          )}
+        />
 
-            <Text style={styles.sectionTitle}>Global Top 50</Text>
-            {topTracks.map((track, index) => (
-              <TouchableOpacity key={`${track.id}-${index}`} style={styles.trackRow} activeOpacity={0.7}>
-                <Text style={styles.trackIndex}>{index + 1}</Text>
-                <Image source={{ uri: track.artworkUrl }} style={styles.trackArt} />
-                <View style={styles.trackInfo}>
-                  <Text style={styles.trackName} numberOfLines={1}>{track.name}</Text>
-                  <Text style={styles.trackArtist} numberOfLines={1}>
-                    {track.artists.join(', ')}
-                  </Text>
-                </View>
-                <Text style={styles.trackDuration}>{formatDuration(track.durationMs)}</Text>
-              </TouchableOpacity>
-            ))}
-          </>
+        <Text style={styles.sectionTitle}>Global Top 50</Text>
+        {loading ? (
+          <ActivityIndicator color="#1DB954" style={{ marginTop: 20 }} />
+        ) : (
+          topTracks.map((track, index) => (
+            <TouchableOpacity key={`${track.id}-${index}`} style={styles.trackRow} activeOpacity={0.7} onPress={() => handleTrackPress(track)}>
+              <Text style={styles.trackIndex}>{index + 1}</Text>
+              <Image source={{ uri: track.images }} style={styles.trackArt} />
+              <View style={styles.trackInfo}>
+                <Text style={styles.trackName} numberOfLines={1}>{track.name}</Text>
+                <Text style={styles.trackArtist} numberOfLines={1}>{track.artists}</Text>
+              </View>
+              <Text style={styles.trackDuration}>{formatDuration(track.duration_ms)}</Text>
+            </TouchableOpacity>
+          ))
         )}
       </ScrollView>
     </View>

@@ -1,5 +1,7 @@
 import { searchTracks, type SpotifyTrack } from '@/services/api';
+import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,10 +22,16 @@ function formatDuration(ms: number) {
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
+  const { playSpotifyTrack } = useTrackPlayerContext();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SpotifyTrack[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+
+  const handleTrackPress = useCallback((track: SpotifyTrack) => {
+    playSpotifyTrack(track);
+    router.push('/player');
+  }, [playSpotifyTrack]);
 
   const handleSearch = useCallback(async () => {
     if (!query.trim()) return;
@@ -74,15 +82,15 @@ export default function ExploreScreen() {
             ) : null
           }
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.trackRow} activeOpacity={0.7}>
-              <Image source={{ uri: item.artworkUrl }} style={styles.trackArt} />
+            <TouchableOpacity style={styles.trackRow} activeOpacity={0.7} onPress={() => handleTrackPress(item)}>
+              <Image source={{ uri: item.images }} style={styles.trackArt} />
               <View style={styles.trackInfo}>
                 <Text style={styles.trackName} numberOfLines={1}>{item.name}</Text>
                 <Text style={styles.trackMeta} numberOfLines={1}>
-                  {item.artists.join(', ')} · {item.albumName}
+                  {item.artists} · {item.album_name}
                 </Text>
               </View>
-              <Text style={styles.duration}>{formatDuration(item.durationMs)}</Text>
+              <Text style={styles.duration}>{formatDuration(item.duration_ms)}</Text>
             </TouchableOpacity>
           )}
         />

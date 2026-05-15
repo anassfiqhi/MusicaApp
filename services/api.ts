@@ -118,21 +118,8 @@ export async function getTrackMetadata(trackId: string): Promise<any> {
 }
 
 // ── Stream URL ────────────────────────────────────────────────────────────────
-// Resolves a playable audio URL for a Spotify track ID via Deezer 30s preview.
+// Returns a full lossless FLAC stream URL via the /stream-audio/ endpoint.
 
-export async function getStreamUrl(spotifyId: string): Promise<string | null> {
-  const avail = await fetch(`${SPOTFLAC}/availability/${spotifyId}`);
-  const json = await avail.json();
-
-  const deezerUrl: string | undefined = json.deezer_url;
-  if (deezerUrl) {
-    const deezerId = deezerUrl.split('/track/')[1]?.split('?')[0];
-    if (deezerId) {
-      const deezer = await fetch(`https://api.deezer.com/track/${deezerId}`);
-      const deezerJson = await deezer.json();
-      if (deezerJson.preview) return deezerJson.preview as string;
-    }
-  }
-
-  return null;
+export function getStreamUrl(spotifyId: string): string {
+  return `${SPOTFLAC}/stream-audio/${spotifyId}`;
 }

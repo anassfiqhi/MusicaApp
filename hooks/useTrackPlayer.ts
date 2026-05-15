@@ -36,45 +36,31 @@ export function useTrackPlayer() {
     }
   }, [player]);
 
-  const playSpotifyTrack = useCallback(async (spotifyTrack: SpotifyTrack) => {
+  const playSpotifyTrack = useCallback((spotifyTrack: SpotifyTrack) => {
     setIsPlaylistMode(false);
     setIsLoadingTrack(true);
 
-    // Show metadata immediately while URL resolves
-    setCurrentTrack({
+    const url = getStreamUrl(spotifyTrack.id);
+    const track: Track = {
       id: spotifyTrack.id,
       title: spotifyTrack.name,
       artist: spotifyTrack.artists,
-      audioSource: { uri: '' },
+      audioSource: { uri: url },
       artwork: { uri: spotifyTrack.images },
       gradientColors: ['#0a1a0a', '#1a1a1a', '#000000'],
-    });
+    };
 
-    try {
-      const url = await getStreamUrl(spotifyTrack.id);
-      if (!url) return;
+    setCurrentTrack(track);
+    player.replace({ uri: url });
+    player.play();
+    setIsLoadingTrack(false);
 
-      const track: Track = {
-        id: spotifyTrack.id,
-        title: spotifyTrack.name,
-        artist: spotifyTrack.artists,
-        audioSource: { uri: url },
-        artwork: { uri: spotifyTrack.images },
-        gradientColors: ['#0a1a0a', '#1a1a1a', '#000000'],
-      };
-      setCurrentTrack(track);
-      player.replace({ uri: url });
-      player.play();
-
-      if (player.setActiveForLockScreen) {
-        player.setActiveForLockScreen(true, {
-          title: track.title,
-          artist: track.artist,
-          artworkUrl: spotifyTrack.images,
-        });
-      }
-    } finally {
-      setIsLoadingTrack(false);
+    if (player.setActiveForLockScreen) {
+      player.setActiveForLockScreen(true, {
+        title: track.title,
+        artist: track.artist,
+        artworkUrl: spotifyTrack.images,
+      });
     }
   }, [player]);
 

@@ -14,7 +14,7 @@ import { useTrackPlayerContext } from '../context/TrackPlayerContext';
 export default function PlayerScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { player, status, currentTrack, handlePlayPause, formatTime, goToNext, goToPrev } =
+  const { player, status, currentTrack, isLoadingTrack, handlePlayPause, formatTime, goToNext, goToPrev } =
     useTrackPlayerContext();
 
   return (
@@ -39,6 +39,7 @@ export default function PlayerScreen() {
               formatTime={formatTime}
               onPrev={goToPrev}
               onNext={goToNext}
+              isLoading={isLoadingTrack}
             />
             <LyricsView currentTime={status.currentTime} lyrics={currentTrack.lyrics} />
           </View>

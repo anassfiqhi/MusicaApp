@@ -53,7 +53,6 @@ export function useTrackPlayer() {
     setCurrentTrack(track);
     player.replace({ uri: url });
     player.play();
-    setIsLoadingTrack(false);
 
     if (player.setActiveForLockScreen) {
       player.setActiveForLockScreen(true, {
@@ -63,6 +62,13 @@ export function useTrackPlayer() {
       });
     }
   }, [player]);
+
+  // Clear loading once the player has buffered enough to start
+  useEffect(() => {
+    if (isLoadingTrack && !status.isBuffering && status.duration > 0) {
+      setIsLoadingTrack(false);
+    }
+  }, [isLoadingTrack, status.isBuffering, status.duration]);
 
   useEffect(() => {
     if (status.didJustFinish && isPlaylistMode) {
@@ -88,7 +94,7 @@ export function useTrackPlayer() {
     player,
     status,
     currentTrack,
-    isLoadingTrack,
+    isLoadingTrack: isLoadingTrack || status.isBuffering,
     handlePlayPause,
     formatTime,
     goToTrack,

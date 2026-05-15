@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 
@@ -10,11 +10,15 @@ interface PlayerControlsProps {
   formatTime: (seconds: number) => string;
   onPrev: () => void;
   onNext: () => void;
+  isLoading?: boolean;
 }
 
-export default function PlayerControls({ player, status, handlePlayPause, formatTime, onPrev, onNext }: PlayerControlsProps) {
+export default function PlayerControls({ player, status, handlePlayPause, formatTime, onPrev, onNext, isLoading }: PlayerControlsProps) {
   const { width } = useWindowDimensions();
   const isWide = width >= 768;
+  const [seekValue, setSeekValue] = useState<number | null>(null);
+
+  const displayTime = seekValue ?? status.currentTime;
 
   return (
     <>
@@ -23,16 +27,24 @@ export default function PlayerControls({ player, status, handlePlayPause, format
           style={styles.slider}
           minimumValue={0}
           maximumValue={status.duration || 1}
-          value={status.currentTime}
-          minimumTrackTintColor="#1DB954"
+          value={seekValue ?? status.currentTime}
+          minimumTrackTintColor={isLoading ? '#535353' : '#1DB954'}
           maximumTrackTintColor="#535353"
-          thumbTintColor="#1DB954"
-          onValueChange={(value) => player.seekTo(value)}
-          onSlidingComplete={(value) => player.seekTo(value)}
+          thumbTintColor={isLoading ? 'transparent' : '#1DB954'}
+          disabled={isLoading}
+          onValueChange={(value) => setSeekValue(value)}
+          onSlidingComplete={(value) => {
+            player.seekTo(value);
+            setSeekValue(null);
+          }}
         />
         <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>{formatTime(status.currentTime)}</Text>
-          <Text style={styles.timeText}>{formatTime(status.duration)}</Text>
+          <Text style={[styles.timeText, isLoading && styles.timeTextDisabled]}>
+            {isLoading ? '--:--' : formatTime(displayTime)}
+          </Text>
+          <Text style={[styles.timeText, isLoading && styles.timeTextDisabled]}>
+            {isLoading ? '--:--' : formatTime(status.duration)}
+          </Text>
         </View>
       </View>
 
@@ -46,8 +58,12 @@ export default function PlayerControls({ player, status, handlePlayPause, format
         <TouchableOpacity
           style={[styles.playButton, isWide && styles.playButtonWide]}
           onPress={handlePlayPause}
+          disabled={isLoading}
         >
-          <Ionicons name={status.playing ? 'pause' : 'play'} size={isWide ? 28 : 40} color="black" />
+          {isLoading
+            ? <ActivityIndicator color="black" size={isWide ? 22 : 32} />
+            : <Ionicons name={status.playing ? 'pause' : 'play'} size={isWide ? 28 : 40} color="black" />
+          }
         </TouchableOpacity>
         <TouchableOpacity onPress={onNext}>
           <Ionicons name="play-skip-forward" size={isWide ? 28 : 40} color="white" />
@@ -79,6 +95,9 @@ const styles = StyleSheet.create({
   timeText: {
     color: '#b3b3b3',
     fontSize: 12,
+  },
+  timeTextDisabled: {
+    color: '#3a3a3a',
   },
   controls: {
     flexDirection: 'row',

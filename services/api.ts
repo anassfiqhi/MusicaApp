@@ -123,3 +123,10 @@ export async function getTrackMetadata(trackId: string): Promise<any> {
 export function getStreamUrl(spotifyId: string): string {
   return `${SPOTFLAC}/stream-audio/${spotifyId}`;
 }
+
+// ── Prefetch ──────────────────────────────────────────────────────────────────
+// Fires a background download on the server so /stream-audio/ is ready sooner.
+
+export function prefetchTrack(spotifyId: string): void {
+  fetch(`${SPOTFLAC}/prefetch/${spotifyId}`).catch(() => {});
+}

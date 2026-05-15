@@ -1,4 +1,4 @@
-import { FEED_SECTIONS, getPlaylist, type FeedSection, type SpotifyTrack } from '@/services/api';
+import { FEED_SECTIONS, getPlaylist, prefetchTrack, type FeedSection, type SpotifyTrack } from '@/services/api';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -63,7 +63,7 @@ export default function DiscoverScreen() {
           <ActivityIndicator color="#1DB954" style={{ marginTop: 20 }} />
         ) : (
           topTracks.map((track, index) => (
-            <TouchableOpacity key={`${track.id}-${index}`} style={styles.trackRow} activeOpacity={0.7} onPress={() => handleTrackPress(track)}>
+            <TouchableOpacity key={`${track.id}-${index}`} style={styles.trackRow} activeOpacity={0.7} onPressIn={() => prefetchTrack(track.id)} onPress={() => handleTrackPress(track)}>
               <Text style={styles.trackIndex}>{index + 1}</Text>
               <Image source={{ uri: track.images }} style={styles.trackArt} />
               <View style={styles.trackInfo}>

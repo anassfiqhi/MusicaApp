@@ -1,4 +1,4 @@
-import { searchTracks, type SpotifyTrack } from '@/services/api';
+import { searchTracks, prefetchTrack, type SpotifyTrack } from '@/services/api';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -82,7 +82,7 @@ export default function ExploreScreen() {
             ) : null
           }
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.trackRow} activeOpacity={0.7} onPress={() => handleTrackPress(item)}>
+            <TouchableOpacity style={styles.trackRow} activeOpacity={0.7} onPressIn={() => prefetchTrack(item.id)} onPress={() => handleTrackPress(item)}>
               <Image source={{ uri: item.images }} style={styles.trackArt} />
               <View style={styles.trackInfo}>
                 <Text style={styles.trackName} numberOfLines={1}>{item.name}</Text>

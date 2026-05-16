@@ -16,44 +16,75 @@ export interface SpotifyTrack {
   external_urls?: string;
 }
 
-export interface FeedSection {
-  title: string;
-  playlist_id: string;
-  cover: string;
-}
-
 export interface LyricLine {
   time: number;   // seconds
   text: string;
 }
 
-// ── Feed (static — SpotiFLAC has no feed endpoint) ───────────────────────────
+export interface PlaylistRef {
+  id: string;
+  title: string;
+}
 
-export const FEED_SECTIONS: FeedSection[] = [
+export interface FeedCategory {
+  title: string;
+  playlists: PlaylistRef[];
+}
+
+// ── Feed categories (mirrors Spotify home sections) ───────────────────────────
+
+export const FEED_CATEGORIES: FeedCategory[] = [
   {
-    title: 'Global Top 50',
-    playlist_id: '37i9dQZEVXbMDoHDwVN2tF',
-    cover: 'https://charts-images.scdn.co/assets/regionclients/global/primary/default.jpg',
+    title: 'Charts',
+    playlists: [
+      { id: '37i9dQZEVXbMDoHDwVN2tF', title: 'Global Top 50' },
+      { id: '37i9dQZEVXbG9PaY9ysBUa', title: 'Viral 50 Global' },
+      { id: '37i9dQZEVXbLiRSasKsNU9', title: 'Hot Hits USA' },
+      { id: '37i9dQZEVXbLnolsZ8PSNw', title: 'UK Top 50' },
+      { id: '37i9dQZF1DXcBWIGoYBM5M', title: "Today's Top Hits" },
+    ],
   },
   {
-    title: "Today's Top Hits",
-    playlist_id: '37i9dQZF1DXcBWIGoYBM5M',
-    cover: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72b5f4b',
+    title: 'New Releases',
+    playlists: [
+      { id: '37i9dQZF1DX4JAvHpjipBk', title: 'New Music Friday' },
+      { id: '37i9dQZF1DX4W3atWv6Um5', title: 'New Music Friday UK' },
+      { id: '37i9dQZF1DX2pSTOxoPbx9', title: 'Fresh Finds' },
+    ],
   },
   {
-    title: 'New Music Friday',
-    playlist_id: '37i9dQZF1DX4JAvHpjipBk',
-    cover: 'https://i.scdn.co/image/ab67706f00000002b34cb31be6e81f5e9f9abff7',
+    title: 'Mood',
+    playlists: [
+      { id: '37i9dQZF1DXdPec7aLTmlC', title: 'Happy Hits' },
+      { id: '37i9dQZF1DX3YSRoSdA634', title: 'Sad Songs' },
+      { id: '37i9dQZF1DX4sWSpwq3LiO', title: 'Peaceful Piano' },
+      { id: '37i9dQZF1DWZeKCadgRdKQ', title: 'Deep Focus' },
+    ],
   },
   {
-    title: 'Hot Hits USA',
-    playlist_id: '37i9dQZEVXbLiRSasKsNU9',
-    cover: 'https://i.scdn.co/image/ab67706f000000023b8bcd87f2873e76d9e2f5e2',
+    title: 'Decades',
+    playlists: [
+      { id: '37i9dQZF1DX4UtSsGT1Sk5', title: 'All Out 80s' },
+      { id: '37i9dQZF1DXbG22YGu2p27', title: 'All Out 90s' },
+      { id: '37i9dQZF1DX4o1oenSJRJd', title: 'All Out 2000s' },
+      { id: '37i9dQZF1DX5Opy0CPft2d', title: 'All Out 2010s' },
+    ],
   },
   {
-    title: 'Viral 50 Global',
-    playlist_id: '37i9dQZEVXbG9PaY9ysBUa',
-    cover: 'https://charts-images.scdn.co/assets/regionclients/global/viral/default.jpg',
+    title: 'Hip-Hop',
+    playlists: [
+      { id: '37i9dQZF1DX0XUsuxWHRQd', title: 'Rap Caviar' },
+      { id: '37i9dQZF1DX2vMjgTAMasj', title: 'Most Necessary' },
+      { id: '37i9dQZF1DWUW2bvSkjcJ9', title: 'Trap Nation' },
+    ],
+  },
+  {
+    title: 'Rock',
+    playlists: [
+      { id: '37i9dQZF1DWXRqgorJj26U', title: 'Rock Classics' },
+      { id: '37i9dQZF1DX9GRpeH4CL0S', title: 'Alternative' },
+      { id: '37i9dQZF1DWWOaP4kN0kGo', title: 'Metal' },
+    ],
   },
 ];
 
@@ -70,12 +101,15 @@ export async function searchTracks(q: string, limit = 20): Promise<SpotifyTrack[
 
 // ── Playlist ──────────────────────────────────────────────────────────────────
 
-export async function getPlaylist(playlistId: string, limit = 30): Promise<SpotifyTrack[]> {
+export async function getPlaylist(
+  playlistId: string,
+  limit = 30
+): Promise<{ cover: string; tracks: SpotifyTrack[] }> {
   const url = `https://open.spotify.com/playlist/${playlistId}`;
   const res = await fetch(`${SPOTFLAC}/metadata?url=${encodeURIComponent(url)}`);
   const json = await res.json();
 
-  return ((json.track_list ?? []) as any[])
+  const tracks = ((json.track_list ?? []) as any[])
     .slice(0, limit)
     .map((t) => ({
       id: t.spotify_id ?? t.id ?? '',
@@ -86,6 +120,8 @@ export async function getPlaylist(playlistId: string, limit = 30): Promise<Spoti
       duration_ms: t.duration_ms ?? 0,
       external_urls: t.external_urls ?? '',
     }));
+
+  return { cover: json.playlist_info?.cover ?? '', tracks };
 }
 
 // ── Lyrics ────────────────────────────────────────────────────────────────────

@@ -1,8 +1,8 @@
-import { FEED_SECTIONS, getPlaylist, prefetchTrack, type FeedSection, type SpotifyTrack } from '@/services/api';
+import { FEED_CATEGORIES, getPlaylist, prefetchTrack, type FeedCategory, type PlaylistRef, type SpotifyTrack } from '@/services/api';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -23,14 +23,34 @@ function formatDuration(ms: number) {
 export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const { playSpotifyTrack } = useTrackPlayerContext();
-  const [topTracks, setTopTracks] = useState<SpotifyTrack[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Tracks pane
+  const [selectedId, setSelectedId] = useState<string>(FEED_CATEGORIES[0].playlists[0].id);
+  const [selectedTitle, setSelectedTitle] = useState<string>(FEED_CATEGORIES[0].playlists[0].title);
+  const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
+  const [loadingTracks, setLoadingTracks] = useState(true);
+  const loadingFor = useRef<string>('');
+
+  // Cover cache: playlistId → url
+  const [covers, setCovers] = useState<Record<string, string>>({});
+
+  const loadPlaylist = useCallback((playlist: PlaylistRef) => {
+    setSelectedId(playlist.id);
+    setSelectedTitle(playlist.title);
+    setLoadingTracks(true);
+    loadingFor.current = playlist.id;
+
+    getPlaylist(playlist.id, 20).then(({ cover, tracks: t }) => {
+      if (loadingFor.current !== playlist.id) return;
+      setTracks(t);
+      setLoadingTracks(false);
+      if (cover) setCovers((prev) => ({ ...prev, [playlist.id]: cover }));
+    });
+  }, []);
 
   useEffect(() => {
-    getPlaylist('37i9dQZEVXbMDoHDwVN2tF', 15)
-      .then(setTopTracks)
-      .finally(() => setLoading(false));
-  }, []);
+    loadPlaylist(FEED_CATEGORIES[0].playlists[0]);
+  }, [loadPlaylist]);
 
   const handleTrackPress = useCallback((track: SpotifyTrack) => {
     playSpotifyTrack(track);
@@ -43,27 +63,56 @@ export default function DiscoverScreen() {
 
         <Text style={styles.heading}>Discover</Text>
 
-        <Text style={styles.sectionTitle}>Featured</Text>
-        <FlatList
-          data={FEED_SECTIONS}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.playlist_id}
-          contentContainerStyle={styles.horizontalList}
-          renderItem={({ item }: { item: FeedSection }) => (
-            <TouchableOpacity style={styles.playlistCard} activeOpacity={0.8}>
-              <Image source={{ uri: item.cover }} style={styles.playlistCover} />
-              <Text style={styles.playlistTitle} numberOfLines={1}>{item.title}</Text>
-            </TouchableOpacity>
-          )}
-        />
+        {FEED_CATEGORIES.map((category: FeedCategory) => (
+          <View key={category.title}>
+            <Text style={styles.sectionTitle}>{category.title}</Text>
+            <FlatList
+              data={category.playlists}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.horizontalList}
+              renderItem={({ item }: { item: PlaylistRef }) => {
+                const active = item.id === selectedId;
+                const cover = covers[item.id];
+                return (
+                  <TouchableOpacity
+                    style={styles.playlistCard}
+                    activeOpacity={0.8}
+                    onPress={() => loadPlaylist(item)}
+                  >
+                    <View style={[styles.coverWrap, active && styles.coverWrapActive]}>
+                      {cover
+                        ? <Image source={{ uri: cover }} style={styles.cover} />
+                        : <View style={[styles.cover, styles.coverPlaceholder]}>
+                            {active && loadingTracks
+                              ? <ActivityIndicator color="#1DB954" size="small" />
+                              : null}
+                          </View>
+                      }
+                    </View>
+                    <Text style={[styles.cardTitle, active && styles.cardTitleActive]} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        ))}
 
-        <Text style={styles.sectionTitle}>Global Top 50</Text>
-        {loading ? (
+        <Text style={styles.sectionTitle}>{selectedTitle}</Text>
+        {loadingTracks ? (
           <ActivityIndicator color="#1DB954" style={{ marginTop: 20 }} />
         ) : (
-          topTracks.map((track, index) => (
-            <TouchableOpacity key={`${track.id}-${index}`} style={styles.trackRow} activeOpacity={0.7} onPressIn={() => prefetchTrack(track.id)} onPress={() => handleTrackPress(track)}>
+          tracks.map((track, index) => (
+            <TouchableOpacity
+              key={`${track.id}-${index}`}
+              style={styles.trackRow}
+              activeOpacity={0.7}
+              onPressIn={() => prefetchTrack(track.id)}
+              onPress={() => handleTrackPress(track)}
+            >
               <Text style={styles.trackIndex}>{index + 1}</Text>
               <Image source={{ uri: track.images }} style={styles.trackArt} />
               <View style={styles.trackInfo}>
@@ -88,20 +137,36 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 20,
+    paddingBottom: 8,
   },
   sectionTitle: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '700',
     paddingHorizontal: 16,
+    marginTop: 20,
     marginBottom: 12,
-    marginTop: 8,
   },
-  horizontalList: { paddingHorizontal: 16, gap: 12, marginBottom: 28 },
-  playlistCard: { width: 140 },
-  playlistCover: { width: 140, height: 140, borderRadius: 8, backgroundColor: '#282828' },
-  playlistTitle: { color: '#fff', fontSize: 13, fontWeight: '600', marginTop: 8 },
+  horizontalList: { paddingHorizontal: 16, gap: 12, paddingBottom: 4 },
+  playlistCard: { width: 130 },
+  coverWrap: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  coverWrapActive: {
+    borderColor: '#1DB954',
+  },
+  cover: { width: 126, height: 126 },
+  coverPlaceholder: { backgroundColor: '#282828', alignItems: 'center', justifyContent: 'center' },
+  cardTitle: {
+    color: '#9B9B9B',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 6,
+  },
+  cardTitleActive: { color: '#1DB954' },
   trackRow: {
     flexDirection: 'row',
     alignItems: 'center',

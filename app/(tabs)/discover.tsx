@@ -1,7 +1,9 @@
-import { FEED_CATEGORIES, type FeedCategory, type PlaylistRef } from '@/services/api';
+import { FEED_CATEGORIES, getHomeFeed, type FeedCategory, type PlaylistRef } from '@/services/api';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   ScrollView,
   StyleSheet,
@@ -13,6 +15,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
+  const [categories, setCategories] = useState<FeedCategory[]>(FEED_CATEGORIES);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getHomeFeed()
+      .then(setCategories)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const openPlaylist = (playlist: PlaylistRef) => {
     router.push({ pathname: '/playlist/[id]', params: { id: playlist.id, title: playlist.title } });
@@ -24,33 +35,37 @@ export default function DiscoverScreen() {
 
         <Text style={styles.heading}>Discover</Text>
 
-        {FEED_CATEGORIES.map((category: FeedCategory) => (
-          <View key={category.title}>
-            <Text style={styles.sectionTitle}>{category.title}</Text>
-            <FlatList
-              data={category.playlists}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.row}
-              renderItem={({ item }: { item: PlaylistRef }) => (
-                <TouchableOpacity
-                  style={styles.card}
-                  activeOpacity={0.8}
-                  onPress={() => openPlaylist(item)}
-                >
-                  <View style={styles.coverWrap}>
-                    {item.cover
-                      ? <Image source={{ uri: item.cover }} style={styles.cover} contentFit="cover" recyclingKey={item.id} />
-                      : <View style={styles.cover} />
-                    }
-                  </View>
-                  <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        ))}
+        {loading ? (
+          <ActivityIndicator color="#1DB954" style={{ marginTop: 40 }} />
+        ) : (
+          categories.map((category: FeedCategory) => (
+            <View key={category.title}>
+              <Text style={styles.sectionTitle}>{category.title}</Text>
+              <FlatList
+                data={category.playlists}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.row}
+                renderItem={({ item }: { item: PlaylistRef }) => (
+                  <TouchableOpacity
+                    style={styles.card}
+                    activeOpacity={0.8}
+                    onPress={() => openPlaylist(item)}
+                  >
+                    <View style={styles.coverWrap}>
+                      {item.cover
+                        ? <Image source={{ uri: item.cover }} style={styles.cover} contentFit="cover" recyclingKey={item.id} />
+                        : <View style={styles.cover} />
+                      }
+                    </View>
+                    <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          ))
+        )}
 
       </ScrollView>
     </View>

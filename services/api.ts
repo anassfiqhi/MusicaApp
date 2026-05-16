@@ -89,6 +89,19 @@ export const FEED_CATEGORIES: FeedCategory[] = [
   },
 ];
 
+// ── Home feed ─────────────────────────────────────────────────────────────────
+// Fetches live Spotify browse sections from the server (featured + categories).
+
+export async function getHomeFeed(): Promise<FeedCategory[]> {
+  const res = await fetch(`${SPOTFLAC}/home`);
+  if (!res.ok) throw new Error(`home feed HTTP ${res.status}`);
+  const json: { title: string; playlists: { id: string; title: string; cover: string }[] }[] = await res.json();
+  return json.map((s) => ({
+    title: s.title,
+    playlists: s.playlists.map((p) => ({ id: p.id, title: p.title, cover: p.cover || undefined })),
+  }));
+}
+
 // ── Search ────────────────────────────────────────────────────────────────────
 
 export async function searchTracks(q: string, limit = 20): Promise<SpotifyTrack[]> {

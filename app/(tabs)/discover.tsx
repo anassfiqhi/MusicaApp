@@ -1,4 +1,5 @@
-import { FEED_CATEGORIES, getHomeFeed, type FeedCategory, type PlaylistRef } from '@/services/api';
+import { getHomeFeed, getPlaylistCover, type FeedCategory, type PlaylistRef } from '@/services/api';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -13,9 +14,38 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+function CoverImage({ cover, id }: { cover?: string; id: string }) {
+  const [resolvedCover, setResolvedCover] = useState(cover ?? '');
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!cover) {
+      getPlaylistCover(id).then((url) => { if (url) setResolvedCover(url); }).catch(() => {});
+    }
+  }, [cover, id]);
+
+  return (
+    <View style={styles.coverWrap}>
+      {resolvedCover && !failed ? (
+        <Image
+          source={{ uri: resolvedCover }}
+          style={styles.cover}
+          contentFit="cover"
+          recyclingKey={id}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <View style={[styles.cover, styles.coverPlaceholder]}>
+          <Ionicons name="musical-notes" size={36} color="#535353" />
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
-  const [categories, setCategories] = useState<FeedCategory[]>(FEED_CATEGORIES);
+  const [categories, setCategories] = useState<FeedCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,12 +83,7 @@ export default function DiscoverScreen() {
                     activeOpacity={0.8}
                     onPress={() => openPlaylist(item)}
                   >
-                    <View style={styles.coverWrap}>
-                      {item.cover
-                        ? <Image source={{ uri: item.cover }} style={styles.cover} contentFit="cover" recyclingKey={item.id} />
-                        : <View style={styles.cover} />
-                      }
-                    </View>
+                    <CoverImage cover={item.cover} id={item.id} />
                     <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
                   </TouchableOpacity>
                 )}
@@ -95,6 +120,7 @@ const styles = StyleSheet.create({
   card: { width: 140 },
   coverWrap: { borderRadius: 8, overflow: 'hidden', backgroundColor: '#282828' },
   cover: { width: 140, height: 140 },
+  coverPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   cardTitle: {
     color: '#fff',
     fontSize: 12,

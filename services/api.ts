@@ -34,61 +34,6 @@ export interface FeedCategory {
 
 // ── Feed categories (mirrors Spotify home sections) ───────────────────────────
 
-export const FEED_CATEGORIES: FeedCategory[] = [
-  {
-    title: 'Charts',
-    playlists: [
-      { id: '37i9dQZEVXbMDoHDwVN2tF', title: 'Global Top 50',   cover: 'https://charts-images.scdn.co/assets/locale_en/regional/daily/region_global_default.jpg' },
-      { id: '37i9dQZEVXbG9PaY9ysBUa', title: 'Viral 50 Global', cover: 'https://charts-images.scdn.co/assets/regionclients/global/viral/default.jpg' },
-      { id: '37i9dQZEVXbLiRSasKsNU9', title: 'Hot Hits USA',    cover: 'https://i.scdn.co/image/ab67706f000000023b8bcd87f2873e76d9e2f5e2' },
-      { id: '37i9dQZEVXbLnolsZ8PSNw', title: 'UK Top 50',       cover: 'https://charts-images.scdn.co/assets/locale_en/regional/daily/region_gb_default.jpg' },
-      { id: '37i9dQZF1DXcBWIGoYBM5M', title: "Today's Top Hits", cover: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72b5f4b' },
-    ],
-  },
-  {
-    title: 'New Releases',
-    playlists: [
-      { id: '37i9dQZF1DX4JAvHpjipBk', title: 'New Music Friday',    cover: 'https://i.scdn.co/image/ab67706f00000002b34cb31be6e81f5e9f9abff7' },
-      { id: '37i9dQZF1DX4W3atWv6Um5', title: 'New Music Friday UK' },
-      { id: '37i9dQZF1DX2pSTOxoPbx9', title: 'Fresh Finds' },
-    ],
-  },
-  {
-    title: 'Mood',
-    playlists: [
-      { id: '37i9dQZF1DXdPec7aLTmlC', title: 'Happy Hits' },
-      { id: '37i9dQZF1DX3YSRoSdA634', title: 'Sad Songs' },
-      { id: '37i9dQZF1DX4sWSpwq3LiO', title: 'Peaceful Piano' },
-      { id: '37i9dQZF1DWZeKCadgRdKQ', title: 'Deep Focus' },
-    ],
-  },
-  {
-    title: 'Decades',
-    playlists: [
-      { id: '37i9dQZF1DX4UtSsGT1Sk5', title: 'All Out 80s' },
-      { id: '37i9dQZF1DXbG22YGu2p27', title: 'All Out 90s' },
-      { id: '37i9dQZF1DX4o1oenSJRJd', title: 'All Out 2000s' },
-      { id: '37i9dQZF1DX5Opy0CPft2d', title: 'All Out 2010s' },
-    ],
-  },
-  {
-    title: 'Hip-Hop',
-    playlists: [
-      { id: '37i9dQZF1DX0XUsuxWHRQd', title: 'Rap Caviar' },
-      { id: '37i9dQZF1DX2vMjgTAMasj', title: 'Most Necessary' },
-      { id: '37i9dQZF1DWUW2bvSkjcJ9', title: 'Trap Nation' },
-    ],
-  },
-  {
-    title: 'Rock',
-    playlists: [
-      { id: '37i9dQZF1DWXRqgorJj26U', title: 'Rock Classics' },
-      { id: '37i9dQZF1DX9GRpeH4CL0S', title: 'Alternative' },
-      { id: '37i9dQZF1DWWOaP4kN0kGo', title: 'Metal' },
-    ],
-  },
-];
-
 // ── Home feed ─────────────────────────────────────────────────────────────────
 // Fetches live Spotify browse sections from the server (featured + categories).
 
@@ -174,6 +119,21 @@ export async function getLyrics(
       time: parseInt(l.startTimeMs, 10) / 1000,
       text: l.words,
     }));
+}
+
+// ── Playlist cover ────────────────────────────────────────────────────────────
+// Lightweight cover-only fetch (no tracks). Used as fallback in discover.
+
+const coverCache = new Map<string, string>();
+
+export async function getPlaylistCover(playlistId: string): Promise<string> {
+  if (coverCache.has(playlistId)) return coverCache.get(playlistId)!;
+  const url = `https://open.spotify.com/playlist/${playlistId}`;
+  const res = await fetch(`${SPOTFLAC}/metadata?url=${encodeURIComponent(url)}`);
+  const json = await res.json();
+  const cover: string = json.playlist_info?.cover ?? '';
+  coverCache.set(playlistId, cover);
+  return cover;
 }
 
 // ── Track metadata ────────────────────────────────────────────────────────────

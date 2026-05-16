@@ -24,6 +24,7 @@ export interface LyricLine {
 export interface PlaylistRef {
   id: string;
   title: string;
+  cover?: string;
 }
 
 export interface FeedCategory {
@@ -37,17 +38,17 @@ export const FEED_CATEGORIES: FeedCategory[] = [
   {
     title: 'Charts',
     playlists: [
-      { id: '37i9dQZEVXbMDoHDwVN2tF', title: 'Global Top 50' },
-      { id: '37i9dQZEVXbG9PaY9ysBUa', title: 'Viral 50 Global' },
-      { id: '37i9dQZEVXbLiRSasKsNU9', title: 'Hot Hits USA' },
-      { id: '37i9dQZEVXbLnolsZ8PSNw', title: 'UK Top 50' },
-      { id: '37i9dQZF1DXcBWIGoYBM5M', title: "Today's Top Hits" },
+      { id: '37i9dQZEVXbMDoHDwVN2tF', title: 'Global Top 50',   cover: 'https://charts-images.scdn.co/assets/locale_en/regional/daily/region_global_default.jpg' },
+      { id: '37i9dQZEVXbG9PaY9ysBUa', title: 'Viral 50 Global', cover: 'https://charts-images.scdn.co/assets/regionclients/global/viral/default.jpg' },
+      { id: '37i9dQZEVXbLiRSasKsNU9', title: 'Hot Hits USA',    cover: 'https://i.scdn.co/image/ab67706f000000023b8bcd87f2873e76d9e2f5e2' },
+      { id: '37i9dQZEVXbLnolsZ8PSNw', title: 'UK Top 50',       cover: 'https://charts-images.scdn.co/assets/locale_en/regional/daily/region_gb_default.jpg' },
+      { id: '37i9dQZF1DXcBWIGoYBM5M', title: "Today's Top Hits", cover: 'https://i.scdn.co/image/ab67706f000000027ea4d505212b9de1f72b5f4b' },
     ],
   },
   {
     title: 'New Releases',
     playlists: [
-      { id: '37i9dQZF1DX4JAvHpjipBk', title: 'New Music Friday' },
+      { id: '37i9dQZF1DX4JAvHpjipBk', title: 'New Music Friday',    cover: 'https://i.scdn.co/image/ab67706f00000002b34cb31be6e81f5e9f9abff7' },
       { id: '37i9dQZF1DX4W3atWv6Um5', title: 'New Music Friday UK' },
       { id: '37i9dQZF1DX2pSTOxoPbx9', title: 'Fresh Finds' },
     ],
@@ -101,14 +102,21 @@ export async function searchTracks(q: string, limit = 20): Promise<SpotifyTrack[
 
 // ── Playlist ──────────────────────────────────────────────────────────────────
 
-export async function getPlaylist(
-  playlistId: string,
-  limit = 30
-): Promise<{ cover: string; tracks: SpotifyTrack[] }> {
+export interface PlaylistData {
+  cover: string;
+  description: string;
+  owner: string;
+  followers: number;
+  totalTracks: number;
+  tracks: SpotifyTrack[];
+}
+
+export async function getPlaylist(playlistId: string, limit = 50): Promise<PlaylistData> {
   const url = `https://open.spotify.com/playlist/${playlistId}`;
   const res = await fetch(`${SPOTFLAC}/metadata?url=${encodeURIComponent(url)}`);
   const json = await res.json();
 
+  const info = json.playlist_info ?? {};
   const tracks = ((json.track_list ?? []) as any[])
     .slice(0, limit)
     .map((t) => ({
@@ -121,7 +129,14 @@ export async function getPlaylist(
       external_urls: t.external_urls ?? '',
     }));
 
-  return { cover: json.playlist_info?.cover ?? '', tracks };
+  return {
+    cover: info.cover ?? '',
+    description: info.description ?? '',
+    owner: info.owner?.display_name ?? 'Spotify',
+    followers: info.followers?.total ?? 0,
+    totalTracks: info.tracks?.total ?? tracks.length,
+    tracks,
+  };
 }
 
 // ── Lyrics ────────────────────────────────────────────────────────────────────

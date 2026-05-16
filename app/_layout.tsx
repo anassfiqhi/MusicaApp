@@ -14,6 +14,10 @@ export default function RootLayout() {
             name="player"
             options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
           />
+          <Stack.Screen
+            name="playlist/[id]"
+            options={{ animation: 'slide_from_right' }}
+          />
         </Stack>
       </TrackPlayerProvider>
     </SafeAreaProvider>

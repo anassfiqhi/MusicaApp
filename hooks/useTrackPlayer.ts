@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { PLAYLIST, type Track } from '../data/trackData';
-import { getStreamUrl, getLyrics, type SpotifyTrack } from '../services/api';
+import { getStreamUrl, getLyrics, prefetchTrack, type SpotifyTrack } from '../services/api';
 
 export function useTrackPlayer() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -9,6 +9,10 @@ export function useTrackPlayer() {
   const [isPlaylistMode, setIsPlaylistMode] = useState(true);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
+
+  // Spotify queue — stored in refs to avoid stale closures in callbacks
+  const spotifyQueueRef = useRef<SpotifyTrack[]>([]);
+  const spotifyQueueIndexRef = useRef<number>(-1);
 
   const player = useAudioPlayer(PLAYLIST[0].audioSource);
   const status = useAudioPlayerStatus(player);
@@ -37,8 +41,8 @@ export function useTrackPlayer() {
     }
   }, [player]);
 
-  const playSpotifyTrack = useCallback((spotifyTrack: SpotifyTrack) => {
-    setIsPlaylistMode(false);
+  // Core: load and play a single SpotifyTrack — shared by all Spotify play paths
+  const playSpotifyTrackCore = useCallback((spotifyTrack: SpotifyTrack) => {
     setIsLoadingTrack(true);
 
     const url = getStreamUrl(spotifyTrack.id);
@@ -76,6 +80,45 @@ export function useTrackPlayer() {
       .finally(() => setIsLoadingLyrics(false));
   }, [player]);
 
+  // Play a single Spotify track (no queue)
+  const playSpotifyTrack = useCallback((spotifyTrack: SpotifyTrack) => {
+    setIsPlaylistMode(false);
+    spotifyQueueRef.current = [];
+    spotifyQueueIndexRef.current = -1;
+    playSpotifyTrackCore(spotifyTrack);
+  }, [playSpotifyTrackCore]);
+
+  // Play a Spotify playlist starting at startIndex
+  const playSpotifyPlaylist = useCallback((tracks: SpotifyTrack[], startIndex: number) => {
+    setIsPlaylistMode(false);
+    spotifyQueueRef.current = tracks;
+    spotifyQueueIndexRef.current = startIndex;
+    playSpotifyTrackCore(tracks[startIndex]);
+    // Prefetch the next track
+    if (startIndex + 1 < tracks.length) {
+      prefetchTrack(tracks[startIndex + 1].id);
+    }
+  }, [playSpotifyTrackCore]);
+
+  const goToSpotifyNext = useCallback(() => {
+    const queue = spotifyQueueRef.current;
+    const next = spotifyQueueIndexRef.current + 1;
+    if (next < queue.length) {
+      spotifyQueueIndexRef.current = next;
+      playSpotifyTrackCore(queue[next]);
+      if (next + 1 < queue.length) prefetchTrack(queue[next + 1].id);
+    }
+  }, [playSpotifyTrackCore]);
+
+  const goToSpotifyPrev = useCallback(() => {
+    const queue = spotifyQueueRef.current;
+    const prev = spotifyQueueIndexRef.current - 1;
+    if (prev >= 0) {
+      spotifyQueueIndexRef.current = prev;
+      playSpotifyTrackCore(queue[prev]);
+    }
+  }, [playSpotifyTrackCore]);
+
   // Clear loading once the player has buffered enough to start
   useEffect(() => {
     if (isLoadingTrack && !status.isBuffering && status.duration > 0) {
@@ -83,11 +126,15 @@ export function useTrackPlayer() {
     }
   }, [isLoadingTrack, status.isBuffering, status.duration]);
 
+  // Auto-advance on track finish
   useEffect(() => {
-    if (status.didJustFinish && isPlaylistMode) {
+    if (!status.didJustFinish) return;
+    if (isPlaylistMode) {
       goToTrack((currentIndex + 1) % PLAYLIST.length);
+    } else if (spotifyQueueRef.current.length > 0) {
+      goToSpotifyNext();
     }
-  }, [status.didJustFinish, currentIndex, isPlaylistMode, goToTrack]);
+  }, [status.didJustFinish, isPlaylistMode, currentIndex, goToTrack, goToSpotifyNext]);
 
   const handlePlayPause = () => {
     if (status.playing) {
@@ -103,6 +150,22 @@ export function useTrackPlayer() {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  const goToNext = useCallback(() => {
+    if (isPlaylistMode) {
+      goToTrack((currentIndex + 1) % PLAYLIST.length);
+    } else if (spotifyQueueRef.current.length > 0) {
+      goToSpotifyNext();
+    }
+  }, [isPlaylistMode, currentIndex, goToTrack, goToSpotifyNext]);
+
+  const goToPrev = useCallback(() => {
+    if (isPlaylistMode) {
+      goToTrack((currentIndex - 1 + PLAYLIST.length) % PLAYLIST.length);
+    } else if (spotifyQueueRef.current.length > 0) {
+      goToSpotifyPrev();
+    }
+  }, [isPlaylistMode, currentIndex, goToTrack, goToSpotifyPrev]);
+
   return {
     player,
     status,
@@ -113,7 +176,8 @@ export function useTrackPlayer() {
     formatTime,
     goToTrack,
     playSpotifyTrack,
-    goToNext: () => { if (isPlaylistMode) goToTrack((currentIndex + 1) % PLAYLIST.length); },
-    goToPrev: () => { if (isPlaylistMode) goToTrack((currentIndex - 1 + PLAYLIST.length) % PLAYLIST.length); },
+    playSpotifyPlaylist,
+    goToNext,
+    goToPrev,
   };
 }

@@ -32,7 +32,7 @@ export default function PlaylistScreen() {
   const { id, title } = useLocalSearchParams<{ id: string; title: string }>();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { playSpotifyTrack } = useTrackPlayerContext();
+  const { playSpotifyPlaylist } = useTrackPlayerContext();
 
   const [cover, setCover] = useState('');
   const [description, setDescription] = useState('');
@@ -54,14 +54,21 @@ export default function PlaylistScreen() {
     });
   }, [id]);
 
-  const handlePlay = (track: SpotifyTrack) => {
-    playSpotifyTrack(track);
+  const handlePlay = (track: SpotifyTrack, index: number) => {
+    playSpotifyPlaylist(tracks, index);
     router.push('/player');
   };
 
   const handlePlayAll = () => {
     if (tracks.length === 0) return;
-    playSpotifyTrack(tracks[0]);
+    playSpotifyPlaylist(tracks, 0);
+    router.push('/player');
+  };
+
+  const handleShuffle = () => {
+    if (tracks.length === 0) return;
+    const shuffled = [...tracks].sort(() => Math.random() - 0.5);
+    playSpotifyPlaylist(shuffled, 0);
     router.push('/player');
   };
 
@@ -105,7 +112,7 @@ export default function PlaylistScreen() {
             <Ionicons name="ellipsis-horizontal" size={26} color="#9B9B9B" />
           </View>
           <View style={styles.controlsRight}>
-            <TouchableOpacity style={styles.shuffleBtn} onPress={handlePlayAll}>
+            <TouchableOpacity style={styles.shuffleBtn} onPress={handleShuffle}>
               <Ionicons name="shuffle" size={22} color="#1DB954" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.playBtn} onPress={handlePlayAll}>
@@ -124,7 +131,7 @@ export default function PlaylistScreen() {
               style={styles.trackRow}
               activeOpacity={0.7}
               onPressIn={() => prefetchTrack(track.id)}
-              onPress={() => handlePlay(track)}
+              onPress={() => handlePlay(track, index)}
             >
               <Image source={{ uri: track.images }} style={styles.trackArt} />
               <View style={styles.trackInfo}>

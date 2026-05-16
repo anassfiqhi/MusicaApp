@@ -2,10 +2,11 @@ import { getHomeFeed, getPlaylistCover, type FeedCategory, type PlaylistRef } fr
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -47,13 +48,24 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const [categories, setCategories] = useState<FeedCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchFeed = useCallback(async () => {
+    try {
+      const data = await getHomeFeed();
+      setCategories(data);
+    } catch {}
+  }, []);
 
   useEffect(() => {
-    getHomeFeed()
-      .then(setCategories)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    fetchFeed().finally(() => setLoading(false));
+  }, [fetchFeed]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchFeed();
+    setRefreshing(false);
+  }, [fetchFeed]);
 
   const openPlaylist = (playlist: PlaylistRef) => {
     router.push({ pathname: '/playlist/[id]', params: { id: playlist.id, title: playlist.title } });
@@ -61,12 +73,22 @@ export default function DiscoverScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1DB954" />
+        }
+      >
         <Text style={styles.heading}>Discover</Text>
 
         {loading ? (
           <ActivityIndicator color="#1DB954" style={{ marginTop: 40 }} />
+        ) : categories.length === 0 ? (
+          <View style={styles.empty}>
+            <Ionicons name="cloud-offline-outline" size={48} color="#535353" />
+            <Text style={styles.emptyText}>Pull down to refresh</Text>
+          </View>
         ) : (
           categories.map((category: FeedCategory) => (
             <View key={category.title}>
@@ -91,7 +113,6 @@ export default function DiscoverScreen() {
             </View>
           ))
         )}
-
       </ScrollView>
     </View>
   );
@@ -128,4 +149,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 17,
   },
+  empty: { alignItems: 'center', marginTop: 80, gap: 12 },
+  emptyText: { color: '#535353', fontSize: 14 },
 });

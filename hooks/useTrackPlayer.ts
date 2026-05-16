@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { PLAYLIST, type Track } from '../data/trackData';
-import { getStreamUrl, type SpotifyTrack } from '../services/api';
+import { getStreamUrl, getLyrics, type SpotifyTrack } from '../services/api';
 
 export function useTrackPlayer() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentTrack, setCurrentTrack] = useState<Track>(PLAYLIST[0]);
   const [isPlaylistMode, setIsPlaylistMode] = useState(true);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
+  const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
 
   const player = useAudioPlayer(PLAYLIST[0].audioSource);
   const status = useAudioPlayerStatus(player);
@@ -61,6 +62,18 @@ export function useTrackPlayer() {
         artworkUrl: spotifyTrack.images,
       });
     }
+
+    setIsLoadingLyrics(true);
+    getLyrics(spotifyTrack.id, spotifyTrack.name, spotifyTrack.artists)
+      .then((lines) => {
+        setCurrentTrack((prev) =>
+          prev.id === spotifyTrack.id
+            ? { ...prev, lyrics: lines.length > 0 ? lines : undefined }
+            : prev
+        );
+      })
+      .catch(() => {})
+      .finally(() => setIsLoadingLyrics(false));
   }, [player]);
 
   // Clear loading once the player has buffered enough to start
@@ -95,6 +108,7 @@ export function useTrackPlayer() {
     status,
     currentTrack,
     isLoadingTrack: isLoadingTrack || status.isBuffering,
+    isLoadingLyrics,
     handlePlayPause,
     formatTime,
     goToTrack,

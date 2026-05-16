@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { Lyric } from '../data/trackData';
 
 interface LyricsViewProps {
   currentTime: number;
   lyrics?: Lyric[];
+  isLoading?: boolean;
 }
 
-export default function LyricsView({ currentTime, lyrics }: LyricsViewProps) {
+export default function LyricsView({ currentTime, lyrics, isLoading }: LyricsViewProps) {
   const { width } = useWindowDimensions();
   const isWide = width >= 768;
 
@@ -68,7 +69,10 @@ export default function LyricsView({ currentTime, lyrics }: LyricsViewProps) {
         </ScrollView>
       ) : (
         <View style={styles.noLyricsContainer}>
-          <Text style={styles.noLyricsText}>No lyrics available</Text>
+          {isLoading
+            ? <ActivityIndicator color="rgba(255,255,255,0.4)" />
+            : <Text style={styles.noLyricsText}>No lyrics available</Text>
+          }
         </View>
       )}
     </View>

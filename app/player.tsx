@@ -14,7 +14,7 @@ import { useTrackPlayerContext } from '../context/TrackPlayerContext';
 export default function PlayerScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { player, status, currentTrack, isLoadingTrack, handlePlayPause, formatTime, goToNext, goToPrev } =
+  const { player, status, currentTrack, isLoadingTrack, isLoadingLyrics, handlePlayPause, formatTime, goToNext, goToPrev } =
     useTrackPlayerContext();
 
   return (
@@ -41,7 +41,7 @@ export default function PlayerScreen() {
               onNext={goToNext}
               isLoading={isLoadingTrack}
             />
-            <LyricsView currentTime={status.currentTime} lyrics={currentTrack.lyrics} />
+            <LyricsView currentTime={status.currentTime} lyrics={currentTrack.lyrics} isLoading={isLoadingLyrics} />
           </View>
         </ScrollView>
       </View>

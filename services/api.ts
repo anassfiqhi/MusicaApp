@@ -102,7 +102,10 @@ export async function getLyrics(
   const lines: any[] = json.lyrics?.lines ?? [];
 
   return lines
-    .filter((l) => l.words?.trim())
+    .filter((l) => {
+      const ms = parseInt(l.startTimeMs, 10);
+      return l.words?.trim() && !isNaN(ms) && ms >= 0;
+    })
     .map((l) => ({
       time: parseInt(l.startTimeMs, 10) / 1000,
       text: l.words,

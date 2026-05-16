@@ -40,12 +40,10 @@ export default function DiscoverScreen() {
                   onPress={() => openPlaylist(item)}
                 >
                   <View style={styles.coverWrap}>
-                    <Image
-                      source={{ uri: `https://open.spotify.com/playlist/${item.id}` }}
-                      style={styles.cover}
-                      contentFit="cover"
-                      recyclingKey={item.id}
-                    />
+                    {item.cover
+                      ? <Image source={{ uri: item.cover }} style={styles.cover} contentFit="cover" recyclingKey={item.id} />
+                      : <View style={styles.cover} />
+                    }
                   </View>
                   <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
                 </TouchableOpacity>

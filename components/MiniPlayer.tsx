@@ -13,7 +13,7 @@ import { useTrackPlayerContext } from '../context/TrackPlayerContext';
 
 export default function MiniPlayer() {
   const { width } = useWindowDimensions();
-  const { currentTrack, status, handlePlayPause, goToNext, hasStartedPlayback } = useTrackPlayerContext();
+  const { currentTrack, status, handlePlayPause, goToNext, hasStartedPlayback, hasNext } = useTrackPlayerContext();
   const isWide = width >= 768;
 
   if (!hasStartedPlayback) return null;
@@ -53,8 +53,9 @@ export default function MiniPlayer() {
           <TouchableOpacity
             onPress={(e) => { e.stopPropagation(); goToNext(); }}
             style={styles.iconBtn}
+            disabled={!hasNext}
           >
-            <Ionicons name="play-skip-forward" size={isWide ? 20 : 24} color="white" />
+            <Ionicons name="play-skip-forward" size={isWide ? 20 : 24} color={hasNext ? 'white' : '#535353'} />
           </TouchableOpacity>
         </View>
         <View style={styles.progressTrack}>

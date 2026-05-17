@@ -6,6 +6,7 @@ import {
   Image,
   StyleSheet,
   useWindowDimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -13,7 +14,7 @@ import { useTrackPlayerContext } from '../context/TrackPlayerContext';
 
 export default function MiniPlayer() {
   const { width } = useWindowDimensions();
-  const { currentTrack, status, handlePlayPause, goToNext, hasStartedPlayback, hasNext } = useTrackPlayerContext();
+  const { currentTrack, status, handlePlayPause, goToNext, goToPrev, hasStartedPlayback, hasNext, hasPrev, isLoadingTrack } = useTrackPlayerContext();
   const isWide = width >= 768;
 
   if (!hasStartedPlayback) return null;
@@ -40,14 +41,22 @@ export default function MiniPlayer() {
           </View>
 
           <TouchableOpacity
+            onPress={(e) => { e.stopPropagation(); goToPrev(); }}
+            style={styles.iconBtn}
+            disabled={!hasPrev}
+          >
+            <Ionicons name="play-skip-back" size={isWide ? 20 : 24} color={hasPrev ? 'white' : '#535353'} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
             onPress={(e) => { e.stopPropagation(); handlePlayPause(); }}
             style={styles.iconBtn}
+            disabled={isLoadingTrack}
           >
-            <Ionicons
-              name={status.playing ? 'pause' : 'play'}
-              size={isWide ? 22 : 26}
-              color="white"
-            />
+            {isLoadingTrack
+              ? <ActivityIndicator color="white" size={isWide ? 18 : 22} />
+              : <Ionicons name={status.playing ? 'pause' : 'play'} size={isWide ? 22 : 26} color="white" />
+            }
           </TouchableOpacity>
 
           <TouchableOpacity

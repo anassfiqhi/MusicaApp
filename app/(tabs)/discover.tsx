@@ -15,30 +15,22 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-function CoverImage({ cover, id }: { cover?: string; id: string }) {
-  const [resolvedCover, setResolvedCover] = useState(cover ?? '');
+function CoverImage({ cover, id }: { cover: string; id: string }) {
   const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    if (!cover) {
-      getPlaylistCover(id).then((url) => { if (url) setResolvedCover(url); }).catch(() => {});
-    }
-  }, [cover, id]);
-
   return (
     <View style={styles.coverWrap}>
-      {resolvedCover && !failed ? (
+      {failed ? (
+        <View style={[styles.cover, styles.coverPlaceholder]}>
+          <Ionicons name="musical-notes" size={36} color="#535353" />
+        </View>
+      ) : (
         <Image
-          source={{ uri: resolvedCover }}
+          source={{ uri: cover }}
           style={styles.cover}
           contentFit="cover"
           recyclingKey={id}
           onError={() => setFailed(true)}
         />
-      ) : (
-        <View style={[styles.cover, styles.coverPlaceholder]}>
-          <Ionicons name="musical-notes" size={36} color="#535353" />
-        </View>
       )}
     </View>
   );
@@ -52,8 +44,21 @@ export default function DiscoverScreen() {
 
   const fetchFeed = useCallback(async () => {
     try {
-      const data = await getHomeFeed();
-      setCategories(data);
+      const raw = await getHomeFeed();
+      // Resolve missing covers concurrently while the spinner is still visible
+      const enriched = await Promise.all(
+        raw.map(async (section) => {
+          const playlists = await Promise.all(
+            section.playlists.map(async (p) => {
+              if (p.cover) return p;
+              const cover = await getPlaylistCover(p.id).catch(() => '');
+              return cover ? { ...p, cover } : p;
+            })
+          );
+          return { ...section, playlists: playlists.filter((p) => p.cover) };
+        })
+      );
+      setCategories(enriched.filter((s) => s.playlists.length > 0));
     } catch {}
   }, []);
 

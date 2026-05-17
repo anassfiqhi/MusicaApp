@@ -13,8 +13,10 @@ import { useTrackPlayerContext } from '../context/TrackPlayerContext';
 
 export default function MiniPlayer() {
   const { width } = useWindowDimensions();
-  const { currentTrack, status, handlePlayPause, goToNext } = useTrackPlayerContext();
+  const { currentTrack, status, handlePlayPause, goToNext, hasStartedPlayback } = useTrackPlayerContext();
   const isWide = width >= 768;
+
+  if (!hasStartedPlayback) return null;
 
   const progress = status.duration > 0 ? status.currentTime / status.duration : 0;
 

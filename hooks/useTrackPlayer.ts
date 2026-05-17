@@ -9,6 +9,7 @@ export function useTrackPlayer() {
   const [isPlaylistMode, setIsPlaylistMode] = useState(true);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
+  const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
 
   // Spotify queue — stored in refs to avoid stale closures in callbacks
   const spotifyQueueRef = useRef<SpotifyTrack[]>([]);
@@ -30,6 +31,7 @@ export function useTrackPlayer() {
     setCurrentIndex(index);
     setCurrentTrack(track);
     setIsPlaylistMode(true);
+    setHasStartedPlayback(true);
     player.replace(track.audioSource);
     player.play();
     if (player.setActiveForLockScreen) {
@@ -43,6 +45,7 @@ export function useTrackPlayer() {
 
   // Core: load and play a single SpotifyTrack — shared by all Spotify play paths
   const playSpotifyTrackCore = useCallback((spotifyTrack: SpotifyTrack) => {
+    setHasStartedPlayback(true);
     setIsLoadingTrack(true);
 
     const url = getStreamUrl(spotifyTrack.id);
@@ -170,6 +173,7 @@ export function useTrackPlayer() {
     player,
     status,
     currentTrack,
+    hasStartedPlayback,
     isLoadingTrack: isLoadingTrack || status.isBuffering,
     isLoadingLyrics,
     handlePlayPause,

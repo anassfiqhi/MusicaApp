@@ -44,6 +44,8 @@ export default function PlayerScreen() {
     formatTime,
     goToNext,
     goToPrev,
+    hasNext,
+    hasPrev,
     playSpotifyPlaylist,
   } = useTrackPlayerContext();
 
@@ -92,6 +94,8 @@ export default function PlayerScreen() {
               onPrev={goToPrev}
               onNext={goToNext}
               isLoading={isLoadingTrack}
+              hasPrev={hasPrev}
+              hasNext={hasNext}
             />
             <LyricsView currentTime={status.currentTime} lyrics={currentTrack.lyrics} isLoading={isLoadingLyrics} />
 

@@ -169,6 +169,13 @@ export function useTrackPlayer() {
     }
   }, [isPlaylistMode, currentIndex, goToTrack, goToSpotifyPrev]);
 
+  const hasNext = isPlaylistMode
+    ? true
+    : spotifyQueueRef.current.length > 0 && spotifyQueueIndexRef.current + 1 < spotifyQueueRef.current.length;
+  const hasPrev = isPlaylistMode
+    ? true
+    : spotifyQueueRef.current.length > 0 && spotifyQueueIndexRef.current > 0;
+
   return {
     player,
     status,
@@ -183,5 +190,7 @@ export function useTrackPlayer() {
     playSpotifyPlaylist,
     goToNext,
     goToPrev,
+    hasNext,
+    hasPrev,
   };
 }

@@ -11,9 +11,11 @@ interface PlayerControlsProps {
   onPrev: () => void;
   onNext: () => void;
   isLoading?: boolean;
+  hasPrev?: boolean;
+  hasNext?: boolean;
 }
 
-export default function PlayerControls({ player, status, handlePlayPause, formatTime, onPrev, onNext, isLoading }: PlayerControlsProps) {
+export default function PlayerControls({ player, status, handlePlayPause, formatTime, onPrev, onNext, isLoading, hasPrev = true, hasNext = true }: PlayerControlsProps) {
   const { width } = useWindowDimensions();
   const isWide = width >= 768;
   const [seekValue, setSeekValue] = useState<number | null>(null);
@@ -52,8 +54,8 @@ export default function PlayerControls({ player, status, handlePlayPause, format
         <TouchableOpacity>
           <Ionicons name="shuffle" size={isWide ? 22 : 32} color="#1DB954" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={onPrev}>
-          <Ionicons name="play-skip-back" size={isWide ? 28 : 40} color="white" />
+        <TouchableOpacity onPress={onPrev} disabled={!hasPrev}>
+          <Ionicons name="play-skip-back" size={isWide ? 28 : 40} color={hasPrev ? 'white' : '#535353'} />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.playButton, isWide && styles.playButtonWide]}
@@ -65,8 +67,8 @@ export default function PlayerControls({ player, status, handlePlayPause, format
             : <Ionicons name={status.playing ? 'pause' : 'play'} size={isWide ? 28 : 40} color="black" />
           }
         </TouchableOpacity>
-        <TouchableOpacity onPress={onNext}>
-          <Ionicons name="play-skip-forward" size={isWide ? 28 : 40} color="white" />
+        <TouchableOpacity onPress={onNext} disabled={!hasNext}>
+          <Ionicons name="play-skip-forward" size={isWide ? 28 : 40} color={hasNext ? 'white' : '#535353'} />
         </TouchableOpacity>
         <TouchableOpacity>
           <Ionicons name="repeat" size={isWide ? 22 : 32} color="white" />

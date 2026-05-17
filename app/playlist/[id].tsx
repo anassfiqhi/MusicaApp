@@ -1,5 +1,4 @@
 import { getPlaylist, prefetchTrack, type SpotifyTrack } from '@/services/api';
-import MiniPlayer from '@/components/MiniPlayer';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -154,17 +153,12 @@ export default function PlaylistScreen() {
         <Ionicons name="chevron-back" size={28} color="#fff" />
       </TouchableOpacity>
 
-      {/* Mini player pinned above bottom */}
-      <View style={[styles.miniPlayerWrap, { bottom: insets.bottom + 8 }]}>
-        <MiniPlayer />
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#121212' },
-  miniPlayerWrap: { position: 'absolute', left: 0, right: 0 },
   coverPlaceholder: { backgroundColor: '#282828' },
   info: { paddingHorizontal: 16, paddingTop: 12, gap: 6 },
   playlistTitle: {

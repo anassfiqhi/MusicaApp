@@ -1,22 +1,14 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HapticTab } from '@/components/haptic-tab';
-import MiniPlayer from '@/components/MiniPlayer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 49 : 56;
-
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const insets = useSafeAreaInsets();
-  const miniPlayerBottom = TAB_BAR_HEIGHT + insets.bottom;
 
   return (
-    <View style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#1DB954',
@@ -47,9 +39,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-    <View style={{ position: 'absolute', left: 0, right: 0, bottom: miniPlayerBottom }}>
-      <MiniPlayer />
-    </View>
-    </View>
   );
 }

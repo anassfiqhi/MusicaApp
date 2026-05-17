@@ -157,3 +157,12 @@ export function getStreamUrl(spotifyId: string): string {
 export function prefetchTrack(spotifyId: string): void {
   fetch(`${SPOTFLAC}/prefetch/${spotifyId}`).catch(() => {});
 }
+
+// ── Recommendations ───────────────────────────────────────────────────────────
+
+export async function getRecommendations(trackId: string, limit = 20): Promise<SpotifyTrack[]> {
+  const res = await fetch(`${SPOTFLAC}/recommendations/${trackId}?limit=${limit}`);
+  if (!res.ok) throw new Error(`recommendations HTTP ${res.status}`);
+  const json = await res.json();
+  return (json.tracks ?? []) as SpotifyTrack[];
+}

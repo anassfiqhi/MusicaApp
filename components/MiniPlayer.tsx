@@ -50,7 +50,7 @@ export default function MiniPlayer() {
 
           <TouchableOpacity
             onPress={(e) => { e.stopPropagation(); handlePlayPause(); }}
-            style={styles.iconBtn}
+            style={[styles.iconBtn, isWide ? styles.playBtnWide : styles.playBtn]}
             disabled={isLoadingTrack}
           >
             {isLoadingTrack
@@ -138,5 +138,15 @@ const styles = StyleSheet.create({
   },
   iconBtn: {
     padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playBtn: {
+    width: 42,
+    height: 42,
+  },
+  playBtnWide: {
+    width: 38,
+    height: 38,
   },
 });

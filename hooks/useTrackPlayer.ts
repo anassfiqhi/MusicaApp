@@ -82,8 +82,24 @@ export function useTrackPlayer() {
       .finally(() => setIsLoadingLyrics(false));
   }, [player]);
 
-  // Play a locally downloaded track
+  // Play a downloaded track — server-cached tracks use the Spotify play path for
+  // loading state and lyrics; truly local file:// tracks play directly.
   const playLocalTrack = useCallback((downloaded: DownloadedTrack) => {
+    spotifyQueueRef.current = [];
+    spotifyQueueIndexRef.current = -1;
+
+    if (downloaded.filePath.startsWith('http')) {
+      playSpotifyTrackCore({
+        id: downloaded.id,
+        name: downloaded.title,
+        artists: downloaded.artist,
+        images: downloaded.artworkUrl ?? '',
+        album_name: '',
+        duration_ms: 0,
+      });
+      return;
+    }
+
     const track: Track = {
       id: downloaded.id,
       title: downloaded.title,
@@ -95,8 +111,6 @@ export function useTrackPlayer() {
     setHasStartedPlayback(true);
     setCurrentTrack(track);
     setTrackError(null);
-    spotifyQueueRef.current = [];
-    spotifyQueueIndexRef.current = -1;
     player.replace({ uri: downloaded.filePath });
     player.play();
     if (player.setActiveForLockScreen) {
@@ -106,7 +120,7 @@ export function useTrackPlayer() {
         artworkUrl: downloaded.artworkUrl,
       });
     }
-  }, [player]);
+  }, [player, playSpotifyTrackCore]);
 
   // Play a single Spotify track (no queue)
   const playSpotifyTrack = useCallback((spotifyTrack: SpotifyTrack) => {

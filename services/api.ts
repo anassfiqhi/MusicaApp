@@ -158,6 +158,47 @@ export function prefetchTrack(spotifyId: string): void {
   fetch(`${SPOTFLAC}/prefetch/${spotifyId}`).catch(() => {});
 }
 
+// ── Server-side download ──────────────────────────────────────────────────────
+// Tells SpotiFLAC to download the track via Tidal (avoids Amazon/Qobuz cooldowns).
+// The file is stored on the server; /stream-audio/ serves it for playback.
+
+const DOWNLOAD_SERVICES = ['amazon', 'qobuz', 'tidal'] as const;
+
+export async function serverDownloadTrack(track: {
+  id: string;
+  title: string;
+  artist: string;
+  artworkUrl?: string;
+}): Promise<void> {
+  const errors: string[] = [];
+
+  for (const service of DOWNLOAD_SERVICES) {
+    console.log(`[download] trying service="${service}"`);
+    const res = await fetch(`${SPOTFLAC}/download`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service,
+        spotify_id: track.id,
+        track_name: track.title,
+        artist_name: track.artist,
+        cover_url: track.artworkUrl ?? '',
+        allow_fallback: true,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success) {
+      console.log(`[download] service="${service}" succeeded`);
+      return;
+    }
+    const err = data.error ?? `HTTP ${res.status}`;
+    console.log(`[download] service="${service}" failed — ${err}`);
+    errors.push(`${service}: ${err}`);
+  }
+
+  throw new Error(errors.join(' | '));
+}
+
 // ── Recommendations ───────────────────────────────────────────────────────────
 
 export async function getRecommendations(trackId: string, limit = 20): Promise<SpotifyTrack[]> {

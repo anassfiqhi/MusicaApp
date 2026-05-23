@@ -17,7 +17,7 @@ export default function MiniPlayer() {
   const { currentTrack, status, handlePlayPause, goToNext, goToPrev, hasStartedPlayback, hasNext, hasPrev, isLoadingTrack } = useTrackPlayerContext();
   const isWide = width >= 768;
 
-  if (!hasStartedPlayback) return null;
+  if (!hasStartedPlayback || !currentTrack) return null;
 
   const progress = status.duration > 0 ? status.currentTime / status.duration : 0;
 

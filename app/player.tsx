@@ -40,6 +40,7 @@ export default function PlayerScreen() {
     currentTrack,
     isLoadingTrack,
     isLoadingLyrics,
+    trackError,
     handlePlayPause,
     formatTime,
     goToNext,
@@ -53,10 +54,14 @@ export default function PlayerScreen() {
   const [loadingRecs, setLoadingRecs] = useState(false);
   const lastFetchedId = useRef<string>('');
 
-  const audioUri = (currentTrack.audioSource as any)?.uri as string | undefined;
+  const audioUri = (currentTrack?.audioSource as any)?.uri as string | undefined;
   const spotifyMode = isSpotifyTrack(audioUri);
 
   useEffect(() => {
+    if (!currentTrack) {
+      router.back();
+      return;
+    }
     if (!spotifyMode || !currentTrack.id || currentTrack.id === lastFetchedId.current) return;
     lastFetchedId.current = currentTrack.id;
     setRecommendations([]);
@@ -65,11 +70,13 @@ export default function PlayerScreen() {
       .then(setRecommendations)
       .catch(() => {})
       .finally(() => setLoadingRecs(false));
-  }, [currentTrack.id, spotifyMode]);
+  }, [currentTrack, spotifyMode]);
 
-  const handlePlayRec = (track: SpotifyTrack, index: number) => {
+  const handlePlayRec = (_track: SpotifyTrack, index: number) => {
     playSpotifyPlaylist(recommendations, index);
   };
+
+  if (!currentTrack) return null;
 
   return (
     <LinearGradient colors={currentTrack.gradientColors} style={styles.container}>
@@ -86,17 +93,23 @@ export default function PlayerScreen() {
           <View style={[styles.inner, width >= 768 && styles.innerWide]}>
             <AlbumArt source={currentTrack.artwork} />
             <TrackDetails title={currentTrack.title} artist={currentTrack.artist} />
-            <PlayerControls
-              player={player}
-              status={status}
-              handlePlayPause={handlePlayPause}
-              formatTime={formatTime}
-              onPrev={goToPrev}
-              onNext={goToNext}
-              isLoading={isLoadingTrack}
-              hasPrev={hasPrev}
-              hasNext={hasNext}
-            />
+            {trackError ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{trackError}</Text>
+              </View>
+            ) : (
+              <PlayerControls
+                player={player}
+                status={status}
+                handlePlayPause={handlePlayPause}
+                formatTime={formatTime}
+                onPrev={goToPrev}
+                onNext={goToNext}
+                isLoading={isLoadingTrack}
+                hasPrev={hasPrev}
+                hasNext={hasNext}
+              />
+            )}
             <LyricsView currentTime={status.currentTime} lyrics={currentTrack.lyrics} isLoading={isLoadingLyrics} />
 
             {/* Similar tracks */}
@@ -178,6 +191,20 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 4,
     backgroundColor: '#282828',
+  },
+  errorBox: {
+    marginTop: 32,
+    padding: 16,
+    backgroundColor: 'rgba(255,60,60,0.15)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,60,60,0.3)',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   recInfo: {
     flex: 1,

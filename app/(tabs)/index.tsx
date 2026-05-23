@@ -57,7 +57,7 @@ export default function LibraryScreen() {
                 style={[
                   styles.gridItem,
                   isWide && styles.gridItemWide,
-                  currentTrack.id === track.id && styles.gridItemActive,
+                  currentTrack?.id === track.id && styles.gridItemActive,
                 ]}
                 onPress={() => handleTrackPress(index)}
               >
@@ -77,7 +77,7 @@ export default function LibraryScreen() {
               key={track.id}
               style={[
                 styles.trackRow,
-                currentTrack.id === track.id && styles.trackRowActive,
+                currentTrack?.id === track.id && styles.trackRowActive,
               ]}
               onPress={() => handleTrackPress(index)}
             >
@@ -87,7 +87,7 @@ export default function LibraryScreen() {
                   style={[
                     styles.trackTitle,
                     isWide && styles.trackTitleWide,
-                    currentTrack.id === track.id && styles.trackTitleActive,
+                    currentTrack?.id === track.id && styles.trackTitleActive,
                   ]}
                   numberOfLines={1}
                 >

@@ -5,17 +5,18 @@ import { getStreamUrl, getLyrics, prefetchTrack, type SpotifyTrack } from '../se
 
 export function useTrackPlayer() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [currentTrack, setCurrentTrack] = useState<Track>(PLAYLIST[0]);
-  const [isPlaylistMode, setIsPlaylistMode] = useState(true);
+  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+  const [isPlaylistMode, setIsPlaylistMode] = useState(false);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
+  const [trackError, setTrackError] = useState<string | null>(null);
 
   // Spotify queue — stored in refs to avoid stale closures in callbacks
   const spotifyQueueRef = useRef<SpotifyTrack[]>([]);
   const spotifyQueueIndexRef = useRef<number>(-1);
 
-  const player = useAudioPlayer(PLAYLIST[0].audioSource);
+  const player = useAudioPlayer(null);
   const status = useAudioPlayerStatus(player);
 
   useEffect(() => {
@@ -44,9 +45,10 @@ export function useTrackPlayer() {
   }, [player]);
 
   // Core: load and play a single SpotifyTrack — shared by all Spotify play paths
-  const playSpotifyTrackCore = useCallback((spotifyTrack: SpotifyTrack) => {
+  const playSpotifyTrackCore = useCallback(async (spotifyTrack: SpotifyTrack) => {
     setHasStartedPlayback(true);
     setIsLoadingTrack(true);
+    setTrackError(null);
 
     const url = getStreamUrl(spotifyTrack.id);
     const track: Track = {
@@ -59,6 +61,24 @@ export function useTrackPlayer() {
     };
 
     setCurrentTrack(track);
+
+    // Pre-check the stream URL so we get a real error message if the track
+    // is unavailable (e.g. no Amazon Music equivalent for this Spotify ID).
+    // HEAD warms the FLAC cache, so the media player's GET hits it immediately.
+    try {
+      const res = await fetch(url, { method: 'HEAD' });
+      if (!res.ok) {
+        const body = await fetch(url).then((r) => r.json()).catch(() => ({}));
+        setTrackError(body?.error ?? `Track unavailable (HTTP ${res.status})`);
+        setIsLoadingTrack(false);
+        return;
+      }
+    } catch {
+      setTrackError('Network error — could not reach server');
+      setIsLoadingTrack(false);
+      return;
+    }
+
     player.replace({ uri: url });
     player.play();
 
@@ -74,7 +94,7 @@ export function useTrackPlayer() {
     getLyrics(spotifyTrack.id, spotifyTrack.name, spotifyTrack.artists)
       .then((lines) => {
         setCurrentTrack((prev) =>
-          prev.id === spotifyTrack.id
+          prev?.id === spotifyTrack.id
             ? { ...prev, lyrics: lines.length > 0 ? lines : undefined }
             : prev
         );
@@ -140,6 +160,7 @@ export function useTrackPlayer() {
   }, [status.didJustFinish, isPlaylistMode, currentIndex, goToTrack, goToSpotifyNext]);
 
   const handlePlayPause = () => {
+    if (!currentTrack) return;
     if (status.playing) {
       player.pause();
     } else {
@@ -169,10 +190,10 @@ export function useTrackPlayer() {
     }
   }, [isPlaylistMode, currentIndex, goToTrack, goToSpotifyPrev]);
 
-  const hasNext = isPlaylistMode
+  const hasNext = !currentTrack ? false : isPlaylistMode
     ? true
     : spotifyQueueRef.current.length > 0 && spotifyQueueIndexRef.current + 1 < spotifyQueueRef.current.length;
-  const hasPrev = isPlaylistMode
+  const hasPrev = !currentTrack ? false : isPlaylistMode
     ? true
     : spotifyQueueRef.current.length > 0 && spotifyQueueIndexRef.current > 0;
 
@@ -183,6 +204,7 @@ export function useTrackPlayer() {
     hasStartedPlayback,
     isLoadingTrack: isLoadingTrack || status.isBuffering,
     isLoadingLyrics,
+    trackError,
     handlePlayPause,
     formatTime,
     goToTrack,

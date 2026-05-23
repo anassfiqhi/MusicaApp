@@ -3,9 +3,6 @@ import * as FileSystem from 'expo-file-system/legacy';
 const DOWNLOADS_DIR = `${FileSystem.documentDirectory}musica-downloads/`;
 const INDEX_FILE = `${DOWNLOADS_DIR}index.json`;
 
-console.log('DOWNLOADS_DIR', DOWNLOADS_DIR);
-console.log('INDEX_FILE', INDEX_FILE);
-
 export interface DownloadedTrack {
   id: string;
   title: string;
@@ -48,8 +45,20 @@ export async function startDownload(
 ): Promise<DownloadedTrack> {
   await ensureDir();
 
-  const ext = track.audioUrl.includes('/stream-audio/') ? 'flac' : 'mp3';
+  const isSpotiFLAC = track.audioUrl.includes('/stream-audio/');
+  const ext = isSpotiFLAC ? 'flac' : 'mp3';
   const filePath = `${DOWNLOADS_DIR}${track.id}.${ext}`;
+
+  // SpotiFLAC blocks the connection while ffmpeg transcodes (no data sent for up to
+  // several minutes). A HEAD request uses the same blocking logic and waits until the
+  // server cache is warm, then the actual file download below is fast.
+  if (isSpotiFLAC) {
+    const res = await fetch(track.audioUrl, { method: 'HEAD' });
+    if (!res.ok) {
+      const body = await fetch(track.audioUrl).then((r) => r.json()).catch(() => ({}));
+      throw new Error(body?.error ?? `Track unavailable (HTTP ${res.status})`);
+    }
+  }
 
   const existing = await FileSystem.getInfoAsync(filePath);
   if (existing.exists) await FileSystem.deleteAsync(filePath, { idempotent: true });

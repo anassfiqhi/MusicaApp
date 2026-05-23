@@ -21,6 +21,7 @@ const MAPPING = {
   'music.note.list': 'queue-music',
   'globe': 'public',
   'magnifyingglass': 'search',
+  'arrow.down.circle': 'download',
 } as IconMapping;
 
 /**

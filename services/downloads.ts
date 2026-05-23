@@ -3,6 +3,9 @@ import * as FileSystem from 'expo-file-system/legacy';
 const DOWNLOADS_DIR = `${FileSystem.documentDirectory}musica-downloads/`;
 const INDEX_FILE = `${DOWNLOADS_DIR}index.json`;
 
+console.log('DOWNLOADS_DIR', DOWNLOADS_DIR);
+console.log('INDEX_FILE', INDEX_FILE);
+
 export interface DownloadedTrack {
   id: string;
   title: string;

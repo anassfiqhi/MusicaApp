@@ -45,7 +45,8 @@ export function DownloadsProvider({ children }: { children: React.ReactNode }) {
           setDownloads((p) => [entry, ...p.filter((d) => d.id !== track.id)]);
           setActiveDownloads((p) => { const n = { ...p }; delete n[track.id]; return n; });
         })
-        .catch(() => {
+        .catch((err) => {
+          console.log(`[download] error — "${track.title}":`, err?.message ?? err);
           setActiveDownloads((p) => ({ ...p, [track.id]: { progress: 0, error: true } }));
           setTimeout(() => {
             setActiveDownloads((p) => { const n = { ...p }; delete n[track.id]; return n; });

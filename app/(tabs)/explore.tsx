@@ -1,6 +1,8 @@
-import { searchTracks, prefetchTrack, type SpotifyTrack } from '@/services/api';
+import { searchTracks, prefetchTrack, getStreamUrl, type SpotifyTrack } from '@/services/api';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
+import { useDownloads } from '@/context/DownloadsContext';
 import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -23,6 +25,7 @@ function formatDuration(ms: number) {
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const { playSpotifyTrack } = useTrackPlayerContext();
+  const { download, isDownloaded, isDownloading, getProgress } = useDownloads();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SpotifyTrack[]>([]);
   const [loading, setLoading] = useState(false);
@@ -32,6 +35,16 @@ export default function ExploreScreen() {
     playSpotifyTrack(track);
     router.push('/player');
   }, [playSpotifyTrack]);
+
+  const handleDownload = useCallback((track: SpotifyTrack) => {
+    download({
+      id: track.id,
+      title: track.name,
+      artist: track.artists,
+      artworkUrl: track.images,
+      audioUrl: getStreamUrl(track.id),
+    });
+  }, [download]);
 
   const handleSearch = useCallback(async () => {
     if (!query.trim()) return;
@@ -81,18 +94,45 @@ export default function ExploreScreen() {
               <Text style={styles.empty}>No results for &quot;{query}&quot;</Text>
             ) : null
           }
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.trackRow} activeOpacity={0.7} onPressIn={() => prefetchTrack(item.id)} onPress={() => handleTrackPress(item)}>
-              <Image source={{ uri: item.images }} style={styles.trackArt} />
-              <View style={styles.trackInfo}>
-                <Text style={styles.trackName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.trackMeta} numberOfLines={1}>
-                  {item.artists} · {item.album_name}
-                </Text>
+          renderItem={({ item }) => {
+            const downloaded = isDownloaded(item.id);
+            const downloading = isDownloading(item.id);
+            const progress = getProgress(item.id);
+            return (
+              <View style={styles.trackRow}>
+                <TouchableOpacity style={styles.trackPressable} activeOpacity={0.7} onPressIn={() => prefetchTrack(item.id)} onPress={() => handleTrackPress(item)}>
+                  <Image source={{ uri: item.images }} style={styles.trackArt} />
+                  <View style={styles.trackInfo}>
+                    <Text style={styles.trackName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.trackMeta} numberOfLines={1}>
+                      {item.artists} · {item.album_name}
+                    </Text>
+                  </View>
+                  <Text style={styles.duration}>{formatDuration(item.duration_ms)}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => { if (!downloaded && !downloading) handleDownload(item); }}
+                  style={styles.dlBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  activeOpacity={0.6}
+                >
+                  {downloading ? (
+                    progress > 0 && progress < 1 ? (
+                      <View style={styles.progressRing}>
+                        <Text style={styles.progressText}>{Math.round(progress * 100)}%</Text>
+                      </View>
+                    ) : (
+                      <ActivityIndicator size="small" color="#1DB954" />
+                    )
+                  ) : downloaded ? (
+                    <Ionicons name="checkmark-circle" size={20} color="#1DB954" />
+                  ) : (
+                    <Ionicons name="arrow-down-circle-outline" size={20} color="#9B9B9B" />
+                  )}
+                </TouchableOpacity>
               </View>
-              <Text style={styles.duration}>{formatDuration(item.duration_ms)}</Text>
-            </TouchableOpacity>
-          )}
+            );
+          }}
         />
       )}
     </View>
@@ -138,6 +178,12 @@ const styles = StyleSheet.create({
   trackRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingRight: 8,
+  },
+  trackPressable: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
     gap: 12,
@@ -165,4 +211,7 @@ const styles = StyleSheet.create({
     color: '#9B9B9B',
     fontSize: 13,
   },
+  dlBtn: { padding: 4, alignItems: 'center', justifyContent: 'center', minWidth: 32 },
+  progressRing: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
+  progressText: { color: '#1DB954', fontSize: 9, fontWeight: '700' },
 });

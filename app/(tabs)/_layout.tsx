@@ -38,6 +38,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={26} name="magnifyingglass" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="downloads"
+        options={{
+          title: 'Downloads',
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="arrow.down.circle" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

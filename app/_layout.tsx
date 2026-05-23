@@ -3,6 +3,7 @@ import { Platform, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { TrackPlayerProvider } from '../context/TrackPlayerContext';
+import { DownloadsProvider } from '../context/DownloadsContext';
 import MiniPlayer from '@/components/MiniPlayer';
 
 const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 49 : 56;
@@ -27,6 +28,7 @@ function FloatingMiniPlayer() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
+      <DownloadsProvider>
       <TrackPlayerProvider>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }}>
@@ -42,6 +44,7 @@ export default function RootLayout() {
         </Stack>
         <FloatingMiniPlayer />
       </TrackPlayerProvider>
+      </DownloadsProvider>
     </SafeAreaProvider>
   );
 }

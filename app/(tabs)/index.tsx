@@ -7,12 +7,14 @@ import {
   Image,
   StyleSheet,
   useWindowDimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
+import { useDownloads } from '@/context/DownloadsContext';
 import { PLAYLIST } from '@/data/trackData';
 
 function getGreeting() {
@@ -26,11 +28,23 @@ export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { goToTrack, currentTrack } = useTrackPlayerContext();
+  const { download, isDownloaded, isDownloading, getProgress } = useDownloads();
   const isWide = width >= 768;
 
   const handleTrackPress = (index: number) => {
     goToTrack(index);
     router.push('/player');
+  };
+
+  const handleDownload = (index: number) => {
+    const track = PLAYLIST[index];
+    download({
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      artworkUrl: undefined,
+      audioUrl: track.audioSource.uri,
+    });
   };
 
   return (
@@ -72,34 +86,63 @@ export default function LibraryScreen() {
           <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide]}>
             All Tracks
           </Text>
-          {PLAYLIST.map((track, index) => (
-            <TouchableOpacity
-              key={track.id}
-              style={[
-                styles.trackRow,
-                currentTrack?.id === track.id && styles.trackRowActive,
-              ]}
-              onPress={() => handleTrackPress(index)}
-            >
-              <Image source={track.artwork} style={[styles.trackArtwork, isWide && styles.trackArtworkWide]} />
-              <View style={styles.trackInfo}>
-                <Text
-                  style={[
-                    styles.trackTitle,
-                    isWide && styles.trackTitleWide,
-                    currentTrack?.id === track.id && styles.trackTitleActive,
-                  ]}
-                  numberOfLines={1}
+          {PLAYLIST.map((track, index) => {
+            const downloaded = isDownloaded(track.id);
+            const downloading = isDownloading(track.id);
+            const progress = getProgress(track.id);
+            return (
+              <View
+                key={track.id}
+                style={[
+                  styles.trackRow,
+                  currentTrack?.id === track.id && styles.trackRowActive,
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.trackPressable}
+                  onPress={() => handleTrackPress(index)}
+                  activeOpacity={0.7}
                 >
-                  {track.title}
-                </Text>
-                <Text style={[styles.trackArtist, isWide && styles.trackArtistWide]}>
-                  {track.artist}
-                </Text>
+                  <Image source={track.artwork} style={[styles.trackArtwork, isWide && styles.trackArtworkWide]} />
+                  <View style={styles.trackInfo}>
+                    <Text
+                      style={[
+                        styles.trackTitle,
+                        isWide && styles.trackTitleWide,
+                        currentTrack?.id === track.id && styles.trackTitleActive,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {track.title}
+                    </Text>
+                    <Text style={[styles.trackArtist, isWide && styles.trackArtistWide]}>
+                      {track.artist}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => { if (!downloaded && !downloading) handleDownload(index); }}
+                  style={styles.dlBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  activeOpacity={0.6}
+                >
+                  {downloading ? (
+                    progress > 0 && progress < 1 ? (
+                      <View style={styles.progressRing}>
+                        <Text style={styles.progressText}>{Math.round(progress * 100)}%</Text>
+                      </View>
+                    ) : (
+                      <ActivityIndicator size="small" color="#1DB954" />
+                    )
+                  ) : downloaded ? (
+                    <Ionicons name="checkmark-circle" size={isWide ? 18 : 20} color="#1DB954" />
+                  ) : (
+                    <Ionicons name="arrow-down-circle-outline" size={isWide ? 18 : 20} color="#9B9B9B" />
+                  )}
+                </TouchableOpacity>
               </View>
-              <Ionicons name="ellipsis-horizontal" size={isWide ? 18 : 20} color="#b3b3b3" />
-            </TouchableOpacity>
-          ))}
+            );
+          })}
         </ScrollView>
 
       </View>
@@ -148,9 +191,14 @@ const styles = StyleSheet.create({
   trackRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
     borderRadius: 8,
     paddingHorizontal: 4,
+  },
+  trackPressable: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
   },
   trackRowActive: { backgroundColor: 'rgba(255,255,255,0.06)' },
   trackArtwork: { width: 52, height: 52, borderRadius: 4 },
@@ -161,4 +209,7 @@ const styles = StyleSheet.create({
   trackTitleActive: { color: '#1DB954' },
   trackArtist: { color: '#b3b3b3', fontSize: 13, marginTop: 2 },
   trackArtistWide: { fontSize: 11 },
+  dlBtn: { padding: 4, alignItems: 'center', justifyContent: 'center', minWidth: 28 },
+  progressRing: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
+  progressText: { color: '#1DB954', fontSize: 9, fontWeight: '700' },
 });

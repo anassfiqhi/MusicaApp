@@ -1,5 +1,6 @@
-import { getPlaylist, prefetchTrack, type SpotifyTrack } from '@/services/api';
+import { getPlaylist, prefetchTrack, getStreamUrl, type SpotifyTrack } from '@/services/api';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
+import { useDownloads } from '@/context/DownloadsContext';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -33,6 +34,7 @@ export default function PlaylistScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { playSpotifyPlaylist } = useTrackPlayerContext();
+  const { download, isDownloaded, isDownloading, getProgress } = useDownloads();
 
   const [cover, setCover] = useState('');
   const [description, setDescription] = useState('');
@@ -70,6 +72,16 @@ export default function PlaylistScreen() {
     const shuffled = [...tracks].sort(() => Math.random() - 0.5);
     playSpotifyPlaylist(shuffled, 0);
     router.push('/player');
+  };
+
+  const handleDownload = (track: SpotifyTrack) => {
+    download({
+      id: track.id,
+      title: track.name,
+      artist: track.artists,
+      artworkUrl: track.images,
+      audioUrl: getStreamUrl(track.id),
+    });
   };
 
   const coverSize = width;
@@ -125,23 +137,48 @@ export default function PlaylistScreen() {
         {loading ? (
           <ActivityIndicator color="#1DB954" style={{ marginTop: 40 }} />
         ) : (
-          tracks.map((track, index) => (
-            <TouchableOpacity
-              key={`${track.id}-${index}`}
-              style={styles.trackRow}
-              activeOpacity={0.7}
-              onPressIn={() => prefetchTrack(track.id)}
-              onPress={() => handlePlay(track, index)}
-            >
-              <Image source={{ uri: track.images }} style={styles.trackArt} />
-              <View style={styles.trackInfo}>
-                <Text style={styles.trackName} numberOfLines={1}>{track.name}</Text>
-                <Text style={styles.trackArtist} numberOfLines={1}>{track.artists}</Text>
+          tracks.map((track, index) => {
+            const downloaded = isDownloaded(track.id);
+            const downloading = isDownloading(track.id);
+            const progress = getProgress(track.id);
+            return (
+              <View key={`${track.id}-${index}`} style={styles.trackRow}>
+                <TouchableOpacity
+                  style={styles.trackPressable}
+                  activeOpacity={0.7}
+                  onPressIn={() => prefetchTrack(track.id)}
+                  onPress={() => handlePlay(track, index)}
+                >
+                  <Image source={{ uri: track.images }} style={styles.trackArt} />
+                  <View style={styles.trackInfo}>
+                    <Text style={styles.trackName} numberOfLines={1}>{track.name}</Text>
+                    <Text style={styles.trackArtist} numberOfLines={1}>{track.artists}</Text>
+                  </View>
+                  <Text style={styles.trackDuration}>{formatDuration(track.duration_ms)}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => { if (!downloaded && !downloading) handleDownload(track); }}
+                  style={styles.dlBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  activeOpacity={0.6}
+                >
+                  {downloading ? (
+                    progress > 0 && progress < 1 ? (
+                      <View style={styles.progressRing}>
+                        <Text style={styles.progressText}>{Math.round(progress * 100)}%</Text>
+                      </View>
+                    ) : (
+                      <ActivityIndicator size="small" color="#1DB954" />
+                    )
+                  ) : downloaded ? (
+                    <Ionicons name="checkmark-circle" size={20} color="#1DB954" />
+                  ) : (
+                    <Ionicons name="arrow-down-circle-outline" size={20} color="#9B9B9B" />
+                  )}
+                </TouchableOpacity>
               </View>
-              <Text style={styles.trackDuration}>{formatDuration(track.duration_ms)}</Text>
-              <Ionicons name="ellipsis-horizontal" size={18} color="#9B9B9B" style={{ marginLeft: 8 }} />
-            </TouchableOpacity>
-          ))
+            );
+          })
         )}
       </ScrollView>
 
@@ -196,6 +233,12 @@ const styles = StyleSheet.create({
   trackRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingRight: 8,
+  },
+  trackPressable: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
     gap: 12,
@@ -205,6 +248,9 @@ const styles = StyleSheet.create({
   trackName: { color: '#fff', fontSize: 15, fontWeight: '500' },
   trackArtist: { color: '#9B9B9B', fontSize: 13 },
   trackDuration: { color: '#9B9B9B', fontSize: 13 },
+  dlBtn: { padding: 4, alignItems: 'center', justifyContent: 'center', minWidth: 32 },
+  progressRing: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
+  progressText: { color: '#1DB954', fontSize: 9, fontWeight: '700' },
   backBtn: {
     position: 'absolute',
     left: 12,

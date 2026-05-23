@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { PLAYLIST, type Track } from '../data/trackData';
 import { getStreamUrl, getLyrics, prefetchTrack, type SpotifyTrack } from '../services/api';
+import type { DownloadedTrack } from '../services/downloads';
 
 export function useTrackPlayer() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -101,6 +102,33 @@ export function useTrackPlayer() {
       })
       .catch(() => {})
       .finally(() => setIsLoadingLyrics(false));
+  }, [player]);
+
+  // Play a locally downloaded track
+  const playLocalTrack = useCallback((downloaded: DownloadedTrack) => {
+    const track: Track = {
+      id: downloaded.id,
+      title: downloaded.title,
+      artist: downloaded.artist,
+      audioSource: { uri: downloaded.filePath },
+      artwork: downloaded.artworkUrl ? { uri: downloaded.artworkUrl } : require('../assets/images/playlist/album_art.png'),
+      gradientColors: ['#0a1a0a', '#1a1a1a', '#000000'],
+    };
+    setHasStartedPlayback(true);
+    setIsPlaylistMode(false);
+    setCurrentTrack(track);
+    setTrackError(null);
+    spotifyQueueRef.current = [];
+    spotifyQueueIndexRef.current = -1;
+    player.replace({ uri: downloaded.filePath });
+    player.play();
+    if (player.setActiveForLockScreen) {
+      player.setActiveForLockScreen(true, {
+        title: downloaded.title,
+        artist: downloaded.artist,
+        artworkUrl: downloaded.artworkUrl,
+      });
+    }
   }, [player]);
 
   // Play a single Spotify track (no queue)
@@ -210,6 +238,7 @@ export function useTrackPlayer() {
     goToTrack,
     playSpotifyTrack,
     playSpotifyPlaylist,
+    playLocalTrack,
     goToNext,
     goToPrev,
     hasNext,

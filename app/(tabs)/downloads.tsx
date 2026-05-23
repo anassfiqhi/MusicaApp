@@ -15,14 +15,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useDownloads } from '@/context/DownloadsContext';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
-import { PLAYLIST } from '@/data/trackData';
 import { formatBytes } from '@/services/downloads';
 import type { DownloadedTrack } from '@/services/downloads';
 
 function getArtwork(d: DownloadedTrack) {
-  if (d.artworkUrl) return { uri: d.artworkUrl };
-  const match = PLAYLIST.find((t) => t.id === d.id);
-  return match ? match.artwork : require('@/assets/images/playlist/album_art.png');
+  return d.artworkUrl ? { uri: d.artworkUrl } : require('@/assets/images/playlist/album_art.png');
 }
 
 function formatDate(ts: number) {

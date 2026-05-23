@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
-import { PLAYLIST, type Track } from '../data/trackData';
+import { type Track } from '../data/trackData';
 import { getStreamUrl, getLyrics, prefetchTrack, type SpotifyTrack } from '../services/api';
 import type { DownloadedTrack } from '../services/downloads';
 
 export function useTrackPlayer() {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-  const [isPlaylistMode, setIsPlaylistMode] = useState(false);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
@@ -28,23 +26,6 @@ export function useTrackPlayer() {
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const goToTrack = useCallback((index: number) => {
-    const track = PLAYLIST[index];
-    setCurrentIndex(index);
-    setCurrentTrack(track);
-    setIsPlaylistMode(true);
-    setHasStartedPlayback(true);
-    player.replace(track.audioSource);
-    player.play();
-    if (player.setActiveForLockScreen) {
-      player.setActiveForLockScreen(true, {
-        title: track.title,
-        artist: track.artist,
-        artworkUrl: undefined,
-      });
-    }
-  }, [player]);
-
   // Core: load and play a single SpotifyTrack — shared by all Spotify play paths
   const playSpotifyTrackCore = useCallback(async (spotifyTrack: SpotifyTrack) => {
     setHasStartedPlayback(true);
@@ -63,9 +44,6 @@ export function useTrackPlayer() {
 
     setCurrentTrack(track);
 
-    // Pre-check the stream URL so we get a real error message if the track
-    // is unavailable (e.g. no Amazon Music equivalent for this Spotify ID).
-    // HEAD warms the FLAC cache, so the media player's GET hits it immediately.
     try {
       const res = await fetch(url, { method: 'HEAD' });
       if (!res.ok) {
@@ -115,7 +93,6 @@ export function useTrackPlayer() {
       gradientColors: ['#0a1a0a', '#1a1a1a', '#000000'],
     };
     setHasStartedPlayback(true);
-    setIsPlaylistMode(false);
     setCurrentTrack(track);
     setTrackError(null);
     spotifyQueueRef.current = [];
@@ -133,7 +110,6 @@ export function useTrackPlayer() {
 
   // Play a single Spotify track (no queue)
   const playSpotifyTrack = useCallback((spotifyTrack: SpotifyTrack) => {
-    setIsPlaylistMode(false);
     spotifyQueueRef.current = [];
     spotifyQueueIndexRef.current = -1;
     playSpotifyTrackCore(spotifyTrack);
@@ -141,11 +117,9 @@ export function useTrackPlayer() {
 
   // Play a Spotify playlist starting at startIndex
   const playSpotifyPlaylist = useCallback((tracks: SpotifyTrack[], startIndex: number) => {
-    setIsPlaylistMode(false);
     spotifyQueueRef.current = tracks;
     spotifyQueueIndexRef.current = startIndex;
     playSpotifyTrackCore(tracks[startIndex]);
-    // Prefetch the next track
     if (startIndex + 1 < tracks.length) {
       prefetchTrack(tracks[startIndex + 1].id);
     }
@@ -180,12 +154,10 @@ export function useTrackPlayer() {
   // Auto-advance on track finish
   useEffect(() => {
     if (!status.didJustFinish) return;
-    if (isPlaylistMode) {
-      goToTrack((currentIndex + 1) % PLAYLIST.length);
-    } else if (spotifyQueueRef.current.length > 0) {
+    if (spotifyQueueRef.current.length > 0) {
       goToSpotifyNext();
     }
-  }, [status.didJustFinish, isPlaylistMode, currentIndex, goToTrack, goToSpotifyNext]);
+  }, [status.didJustFinish, goToSpotifyNext]);
 
   const handlePlayPause = () => {
     if (!currentTrack) return;
@@ -203,26 +175,16 @@ export function useTrackPlayer() {
   };
 
   const goToNext = useCallback(() => {
-    if (isPlaylistMode) {
-      goToTrack((currentIndex + 1) % PLAYLIST.length);
-    } else if (spotifyQueueRef.current.length > 0) {
-      goToSpotifyNext();
-    }
-  }, [isPlaylistMode, currentIndex, goToTrack, goToSpotifyNext]);
+    if (spotifyQueueRef.current.length > 0) goToSpotifyNext();
+  }, [goToSpotifyNext]);
 
   const goToPrev = useCallback(() => {
-    if (isPlaylistMode) {
-      goToTrack((currentIndex - 1 + PLAYLIST.length) % PLAYLIST.length);
-    } else if (spotifyQueueRef.current.length > 0) {
-      goToSpotifyPrev();
-    }
-  }, [isPlaylistMode, currentIndex, goToTrack, goToSpotifyPrev]);
+    if (spotifyQueueRef.current.length > 0) goToSpotifyPrev();
+  }, [goToSpotifyPrev]);
 
-  const hasNext = !currentTrack ? false : isPlaylistMode
-    ? true
+  const hasNext = !currentTrack ? false
     : spotifyQueueRef.current.length > 0 && spotifyQueueIndexRef.current + 1 < spotifyQueueRef.current.length;
-  const hasPrev = !currentTrack ? false : isPlaylistMode
-    ? true
+  const hasPrev = !currentTrack ? false
     : spotifyQueueRef.current.length > 0 && spotifyQueueIndexRef.current > 0;
 
   return {
@@ -235,7 +197,6 @@ export function useTrackPlayer() {
     trackError,
     handlePlayPause,
     formatTime,
-    goToTrack,
     playSpotifyTrack,
     playSpotifyPlaylist,
     playLocalTrack,

@@ -4,18 +4,17 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
   StyleSheet,
   useWindowDimensions,
-  ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { useDownloads } from '@/context/DownloadsContext';
-import { PLAYLIST } from '@/data/trackData';
+import type { DownloadedTrack } from '@/services/downloads';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -24,28 +23,25 @@ function getGreeting() {
   return 'Good evening';
 }
 
+const PLACEHOLDER = require('@/assets/images/playlist/album_art.png');
+
+function artwork(d: DownloadedTrack) {
+  return d.artworkUrl ? { uri: d.artworkUrl } : PLACEHOLDER;
+}
+
 export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { goToTrack, currentTrack } = useTrackPlayerContext();
-  const { download, isDownloaded, isDownloading, getProgress } = useDownloads();
+  const { playLocalTrack, currentTrack } = useTrackPlayerContext();
+  const { downloads, remove } = useDownloads();
   const isWide = width >= 768;
 
-  const handleTrackPress = (index: number) => {
-    goToTrack(index);
+  const handlePlay = (d: DownloadedTrack) => {
+    playLocalTrack(d);
     router.push('/player');
   };
 
-  const handleDownload = (index: number) => {
-    const track = PLAYLIST[index];
-    download({
-      id: track.id,
-      title: track.title,
-      artist: track.artist,
-      artworkUrl: undefined,
-      audioUrl: track.audioSource.uri,
-    });
-  };
+  const gridTracks = downloads.slice(0, 6);
 
   return (
     <LinearGradient colors={['#1a1a2e', '#12122a', '#000000']} style={styles.container}>
@@ -60,90 +56,88 @@ export default function LibraryScreen() {
           </View>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
-        >
-          <View style={[styles.grid, isWide && styles.gridWide]}>
-            {PLAYLIST.map((track, index) => (
-              <TouchableOpacity
-                key={track.id}
-                style={[
-                  styles.gridItem,
-                  isWide && styles.gridItemWide,
-                  currentTrack?.id === track.id && styles.gridItemActive,
-                ]}
-                onPress={() => handleTrackPress(index)}
-              >
-                <Image source={track.artwork} style={styles.gridArtwork} />
-                <Text style={styles.gridTitle} numberOfLines={1}>
-                  {track.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
+        {downloads.length === 0 ? (
+          <View style={styles.empty}>
+            <Ionicons name="musical-notes-outline" size={64} color="#535353" />
+            <Text style={styles.emptyTitle}>Your library is empty</Text>
+            <Text style={styles.emptySubtitle}>
+              Download tracks from Search or Discover to build your library
+            </Text>
+            <TouchableOpacity style={styles.discoverBtn} onPress={() => router.push('/(tabs)/discover')}>
+              <Text style={styles.discoverBtnText}>Browse Discover</Text>
+            </TouchableOpacity>
           </View>
+        ) : (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
+          >
+            {/* Quick-access grid */}
+            <View style={[styles.grid, isWide && styles.gridWide]}>
+              {gridTracks.map((d) => (
+                <TouchableOpacity
+                  key={d.id}
+                  style={[
+                    styles.gridItem,
+                    isWide && styles.gridItemWide,
+                    currentTrack?.id === d.id && styles.gridItemActive,
+                  ]}
+                  onPress={() => handlePlay(d)}
+                >
+                  <Image source={artwork(d)} style={styles.gridArtwork} contentFit="cover" recyclingKey={d.id} />
+                  <Text style={styles.gridTitle} numberOfLines={1}>{d.title}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-          <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide]}>
-            All Tracks
-          </Text>
-          {PLAYLIST.map((track, index) => {
-            const downloaded = isDownloaded(track.id);
-            const downloading = isDownloading(track.id);
-            const progress = getProgress(track.id);
-            return (
+            <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide]}>
+              Downloads
+            </Text>
+
+            {downloads.map((d) => (
               <View
-                key={track.id}
-                style={[
-                  styles.trackRow,
-                  currentTrack?.id === track.id && styles.trackRowActive,
-                ]}
+                key={d.id}
+                style={[styles.trackRow, currentTrack?.id === d.id && styles.trackRowActive]}
               >
                 <TouchableOpacity
                   style={styles.trackPressable}
-                  onPress={() => handleTrackPress(index)}
+                  onPress={() => handlePlay(d)}
                   activeOpacity={0.7}
                 >
-                  <Image source={track.artwork} style={[styles.trackArtwork, isWide && styles.trackArtworkWide]} />
+                  <Image
+                    source={artwork(d)}
+                    style={[styles.trackArtwork, isWide && styles.trackArtworkWide]}
+                    contentFit="cover"
+                    recyclingKey={d.id}
+                  />
                   <View style={styles.trackInfo}>
                     <Text
                       style={[
                         styles.trackTitle,
                         isWide && styles.trackTitleWide,
-                        currentTrack?.id === track.id && styles.trackTitleActive,
+                        currentTrack?.id === d.id && styles.trackTitleActive,
                       ]}
                       numberOfLines={1}
                     >
-                      {track.title}
+                      {d.title}
                     </Text>
                     <Text style={[styles.trackArtist, isWide && styles.trackArtistWide]}>
-                      {track.artist}
+                      {d.artist}
                     </Text>
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => { if (!downloaded && !downloading) handleDownload(index); }}
-                  style={styles.dlBtn}
+                  onPress={() => remove(d.id)}
+                  style={styles.removeBtn}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   activeOpacity={0.6}
                 >
-                  {downloading ? (
-                    progress > 0 && progress < 1 ? (
-                      <View style={styles.progressRing}>
-                        <Text style={styles.progressText}>{Math.round(progress * 100)}%</Text>
-                      </View>
-                    ) : (
-                      <ActivityIndicator size="small" color="#1DB954" />
-                    )
-                  ) : downloaded ? (
-                    <Ionicons name="checkmark-circle" size={isWide ? 18 : 20} color="#1DB954" />
-                  ) : (
-                    <Ionicons name="arrow-down-circle-outline" size={isWide ? 18 : 20} color="#9B9B9B" />
-                  )}
+                  <Ionicons name="checkmark-circle" size={isWide ? 18 : 20} color="#1DB954" />
                 </TouchableOpacity>
               </View>
-            );
-          })}
-        </ScrollView>
+            ))}
+          </ScrollView>
+        )}
 
       </View>
     </LinearGradient>
@@ -170,6 +164,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  empty: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 32,
+    paddingBottom: 80,
+  },
+  emptyTitle: { color: 'white', fontSize: 20, fontWeight: '600', textAlign: 'center' },
+  emptySubtitle: { color: '#9B9B9B', fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  discoverBtn: {
+    marginTop: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: '#1DB954',
+  },
+  discoverBtnText: { color: '#000', fontWeight: '700', fontSize: 14 },
   scrollContent: {},
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 32 },
   gridWide: { gap: 10, marginBottom: 24 },
@@ -209,7 +221,5 @@ const styles = StyleSheet.create({
   trackTitleActive: { color: '#1DB954' },
   trackArtist: { color: '#b3b3b3', fontSize: 13, marginTop: 2 },
   trackArtistWide: { fontSize: 11 },
-  dlBtn: { padding: 4, alignItems: 'center', justifyContent: 'center', minWidth: 28 },
-  progressRing: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
-  progressText: { color: '#1DB954', fontSize: 9, fontWeight: '700' },
+  removeBtn: { padding: 4, alignItems: 'center', justifyContent: 'center', minWidth: 28 },
 });

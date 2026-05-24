@@ -54,9 +54,7 @@ export default function MiniPlayer() {
           if (finished) runOnJS(dismiss)();
         });
       } else if (e.translationY < -40 || e.velocityY < -600) {
-        opacity.value = withTiming(0, { duration: 100 }, (finished) => {
-          if (finished) runOnJS(openPlayer)();
-        });
+        runOnJS(openPlayer)();
       } else {
         translateY.value = withSpring(0, { damping: 20 });
         opacity.value = withSpring(1);

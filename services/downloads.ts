@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
-import { getStreamUrl, serverDownloadTrack } from './api';
+import { getStreamUrl, getLyrics, serverDownloadTrack } from './api';
+import type { Lyric } from '../data/trackData';
 
 const DOWNLOADS_DIR = `${FileSystem.documentDirectory}musica-downloads/`;
 const INDEX_FILE = `${DOWNLOADS_DIR}index.json`;
@@ -10,6 +11,8 @@ export interface DownloadedTrack {
   title: string;
   artist: string;
   artworkUrl?: string;
+  localArtworkPath?: string;
+  lyrics?: Lyric[];
   filePath: string;
   downloadedAt: number;
   fileSizeBytes: number;
@@ -47,7 +50,8 @@ export async function startDownload(
 ): Promise<DownloadedTrack> {
   await ensureDir();
 
-  const localPath = `${DOWNLOADS_DIR}${track.id}.mp3`;
+  const audioPath = `${DOWNLOADS_DIR}${track.id}.mp3`;
+  const artworkPath = `${DOWNLOADS_DIR}${track.id}.jpg`;
 
   // Step 1: Tell server to prepare the file via yt-dlp (blocks until ready)
   onProgress(-1);
@@ -60,12 +64,12 @@ export async function startDownload(
   });
   console.log(`[download] server ready, downloading to device`);
 
-  // Step 2: Download the MP3 from the server to the device with progress
+  // Step 2: Download audio + artwork + lyrics in parallel
   onProgress(0);
-  const streamUrl = getStreamUrl(track.id);
-  const resumable = FileSystem.createDownloadResumable(
-    streamUrl,
-    localPath,
+
+  const audioDownload = FileSystem.createDownloadResumable(
+    getStreamUrl(track.id),
+    audioPath,
     {},
     ({ totalBytesWritten, totalBytesExpectedToWrite }) => {
       if (totalBytesExpectedToWrite > 0) {
@@ -74,19 +78,33 @@ export async function startDownload(
     }
   );
 
-  const result = await resumable.downloadAsync();
-  if (!result || result.status !== 200) {
-    throw new Error(`Download failed — HTTP ${result?.status ?? 'unknown'}`);
+  const artworkDownload = track.artworkUrl
+    ? FileSystem.downloadAsync(track.artworkUrl, artworkPath).catch(() => null)
+    : Promise.resolve(null);
+
+  const lyricsPromise = getLyrics(track.id, track.title, track.artist).catch(() => []);
+
+  const [audioResult, , lyrics] = await Promise.all([
+    audioDownload.downloadAsync(),
+    artworkDownload,
+    lyricsPromise,
+  ]);
+
+  if (!audioResult || audioResult.status !== 200) {
+    throw new Error(`Audio download failed — HTTP ${audioResult?.status ?? 'unknown'}`);
   }
 
-  const info = await FileSystem.getInfoAsync(localPath, { size: true });
-  const fileSizeBytes = info.exists && 'size' in info ? (info.size ?? 0) : 0;
+  const info = await FileSystem.getInfoAsync(audioPath);
+  const fileSizeBytes = info.exists ? ((info as any).size ?? 0) : 0;
+
+  const artworkInfo = await FileSystem.getInfoAsync(artworkPath);
+  const localArtworkPath = artworkInfo.exists ? artworkPath : undefined;
 
   // Step 3: Save to device media library so it appears in the file explorer
   try {
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status === 'granted') {
-      await MediaLibrary.saveToLibraryAsync(localPath);
+      await MediaLibrary.saveToLibraryAsync(audioPath);
       console.log(`[download] saved to media library`);
     }
   } catch (e) {
@@ -98,7 +116,9 @@ export async function startDownload(
     title: track.title,
     artist: track.artist,
     artworkUrl: track.artworkUrl,
-    filePath: localPath,
+    localArtworkPath,
+    lyrics: lyrics.length > 0 ? lyrics : undefined,
+    filePath: audioPath,
     downloadedAt: Date.now(),
     fileSizeBytes,
   };
@@ -106,7 +126,7 @@ export async function startDownload(
   const current = await loadDownloads();
   await persistDownloads([entry, ...current.filter((d) => d.id !== track.id)]);
 
-  console.log(`[download] complete — "${track.title}" (${fileSizeBytes} bytes)`);
+  console.log(`[download] complete — "${track.title}" (${fileSizeBytes} bytes, ${lyrics.length} lyric lines)`);
   return entry;
 }
 
@@ -114,11 +134,15 @@ export async function removeDownload(trackId: string): Promise<DownloadedTrack[]
   const list = await loadDownloads();
   const entry = list.find((d) => d.id === trackId);
 
-  if (entry?.filePath && entry.filePath.startsWith('file://')) {
-    try {
-      const info = await FileSystem.getInfoAsync(entry.filePath);
-      if (info.exists) await FileSystem.deleteAsync(entry.filePath, { idempotent: true });
-    } catch {}
+  if (entry) {
+    await Promise.all([
+      entry.filePath?.startsWith('file://')
+        ? FileSystem.deleteAsync(entry.filePath, { idempotent: true }).catch(() => {})
+        : Promise.resolve(),
+      entry.localArtworkPath
+        ? FileSystem.deleteAsync(entry.localArtworkPath, { idempotent: true }).catch(() => {})
+        : Promise.resolve(),
+    ]);
   }
 
   const updated = list.filter((d) => d.id !== trackId);

@@ -67,45 +67,37 @@ export function useTrackPlayer() {
       .finally(() => setIsLoadingLyrics(false));
   }, [player]);
 
-  // Play a downloaded track — server-cached tracks use the Spotify play path for
-  // loading state and lyrics; truly local file:// tracks play directly.
+  // Play a downloaded track — uses local file, artwork, and cached lyrics directly.
   const playLocalTrack = useCallback((downloaded: DownloadedTrack) => {
     spotifyQueueRef.current = [];
     spotifyQueueIndexRef.current = -1;
 
-    if (downloaded.filePath.startsWith('http')) {
-      playSpotifyTrackCore({
-        id: downloaded.id,
-        name: downloaded.title,
-        artists: downloaded.artist,
-        images: downloaded.artworkUrl ?? '',
-        album_name: '',
-        duration_ms: 0,
-      });
-      return;
-    }
-
+    const artworkUri = downloaded.localArtworkPath ?? downloaded.artworkUrl;
     const track: Track = {
       id: downloaded.id,
       title: downloaded.title,
       artist: downloaded.artist,
       audioSource: { uri: downloaded.filePath },
-      artwork: downloaded.artworkUrl ? { uri: downloaded.artworkUrl } : require('../assets/images/playlist/album_art.png'),
+      artwork: artworkUri ? { uri: artworkUri } : require('../assets/images/playlist/album_art.png'),
       gradientColors: ['#0a1a0a', '#1a1a1a', '#000000'],
+      lyrics: downloaded.lyrics,
     };
+
     setHasStartedPlayback(true);
-    setCurrentTrack(track);
+    setIsLoadingTrack(true);
     setTrackError(null);
+    setCurrentTrack(track);
     player.replace({ uri: downloaded.filePath });
     player.play();
+
     if (player.setActiveForLockScreen) {
       player.setActiveForLockScreen(true, {
         title: downloaded.title,
         artist: downloaded.artist,
-        artworkUrl: downloaded.artworkUrl,
+        artworkUrl: artworkUri,
       });
     }
-  }, [player, playSpotifyTrackCore]);
+  }, [player]);
 
   // Play a single Spotify track (no queue)
   const playSpotifyTrack = useCallback((spotifyTrack: SpotifyTrack) => {

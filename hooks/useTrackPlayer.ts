@@ -14,6 +14,7 @@ export function useTrackPlayer() {
   // Spotify queue — stored in refs to avoid stale closures in callbacks
   const spotifyQueueRef = useRef<SpotifyTrack[]>([]);
   const spotifyQueueIndexRef = useRef<number>(-1);
+  const streamTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const player = useAudioPlayer(null);
   const status = useAudioPlayerStatus(player);
@@ -28,11 +29,18 @@ export function useTrackPlayer() {
 
   // Core: load and play a single SpotifyTrack — shared by all Spotify play paths
   const playSpotifyTrackCore = useCallback((spotifyTrack: SpotifyTrack) => {
+    if (streamTimeoutRef.current) {
+      clearTimeout(streamTimeoutRef.current);
+      streamTimeoutRef.current = null;
+    }
+
     setHasStartedPlayback(true);
     setIsLoadingTrack(true);
     setTrackError(null);
 
     const url = getStreamUrl(spotifyTrack.id);
+    console.log(`[stream] loading "${spotifyTrack.name}" — ${url}`);
+
     const track: Track = {
       id: spotifyTrack.id,
       title: spotifyTrack.name,
@@ -53,6 +61,18 @@ export function useTrackPlayer() {
         artworkUrl: spotifyTrack.images,
       });
     }
+
+    // If the server hasn't delivered audio after 3 minutes, surface an error
+    streamTimeoutRef.current = setTimeout(() => {
+      setIsLoadingTrack((loading) => {
+        if (loading) {
+          console.log(`[stream] timeout — "${spotifyTrack.name}" never started`);
+          setTrackError(`Could not stream "${spotifyTrack.name}" — track may be unavailable`);
+          return false;
+        }
+        return loading;
+      });
+    }, 3 * 60 * 1000);
 
     setIsLoadingLyrics(true);
     getLyrics(spotifyTrack.id, spotifyTrack.name, spotifyTrack.artists)
@@ -138,6 +158,11 @@ export function useTrackPlayer() {
   // Clear loading once the player has buffered enough to start
   useEffect(() => {
     if (isLoadingTrack && !status.isBuffering && status.duration > 0) {
+      if (streamTimeoutRef.current) {
+        clearTimeout(streamTimeoutRef.current);
+        streamTimeoutRef.current = null;
+      }
+      console.log(`[stream] playing — duration ${status.duration.toFixed(1)}s`);
       setIsLoadingTrack(false);
     }
   }, [isLoadingTrack, status.isBuffering, status.duration]);

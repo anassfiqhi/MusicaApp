@@ -4,6 +4,8 @@ const SPOTFLAC =
   process.env.EXPO_PUBLIC_SPOTFLAC_URL ??
   (Platform.OS === 'android' ? 'http://10.0.2.2:8001' : 'http://localhost:8001');
 
+const SUNNIFY = process.env.EXPO_PUBLIC_SUNNIFY_URL ?? 'https://sunnify-spotify-downloader-server.up.railway.app';
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface SpotifyTrack {
@@ -148,14 +150,14 @@ export async function getTrackMetadata(trackId: string): Promise<any> {
 // Returns a full lossless FLAC stream URL via the /stream-audio/ endpoint.
 
 export function getStreamUrl(spotifyId: string): string {
-  return `${SPOTFLAC}/stream-audio/${spotifyId}`;
+  return `${SUNNIFY}/stream-audio/${spotifyId}`;
 }
 
 // ── Prefetch ──────────────────────────────────────────────────────────────────
 // Fires a background download on the server so /stream-audio/ is ready sooner.
 
 export function prefetchTrack(spotifyId: string): void {
-  fetch(`${SPOTFLAC}/prefetch/${spotifyId}`).catch(() => {});
+  fetch(`${SUNNIFY}/prefetch/${spotifyId}`).catch(() => {});
 }
 
 // ── Server-side download ──────────────────────────────────────────────────────
@@ -169,7 +171,7 @@ export async function serverDownloadTrack(track: {
   artworkUrl?: string;
 }): Promise<void> {
   console.log(`[download] POST /download service=auto`);
-  const res = await fetch(`${SPOTFLAC}/download`, {
+  const res = await fetch(`${SUNNIFY}/download`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

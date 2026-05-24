@@ -27,7 +27,7 @@ export function useTrackPlayer() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Core: load and play a single SpotifyTrack — shared by all Spotify play paths
-  const playSpotifyTrackCore = useCallback(async (spotifyTrack: SpotifyTrack) => {
+  const playSpotifyTrackCore = useCallback((spotifyTrack: SpotifyTrack) => {
     setHasStartedPlayback(true);
     setIsLoadingTrack(true);
     setTrackError(null);
@@ -43,21 +43,6 @@ export function useTrackPlayer() {
     };
 
     setCurrentTrack(track);
-
-    try {
-      const res = await fetch(url, { method: 'HEAD' });
-      if (!res.ok) {
-        const body = await fetch(url).then((r) => r.json()).catch(() => ({}));
-        setTrackError(body?.error ?? `Track unavailable (HTTP ${res.status})`);
-        setIsLoadingTrack(false);
-        return;
-      }
-    } catch {
-      setTrackError('Network error — could not reach server');
-      setIsLoadingTrack(false);
-      return;
-    }
-
     player.replace({ uri: url });
     player.play();
 

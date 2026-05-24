@@ -43,21 +43,18 @@ export default function MiniPlayer() {
 
   const panGesture = Gesture.Pan()
     .onUpdate((e) => {
-      translateY.value = e.translationY;
       if (e.translationY > 0) {
-        opacity.value = Math.max(0, 1 - e.translationY / 100);
+        translateY.value = e.translationY * 0.4;
+        opacity.value = Math.max(0, 1 - e.translationY / 120);
       }
     })
     .onEnd((e) => {
       if (e.translationY > 60 || e.velocityY > 600) {
-        // Swipe down → dismiss
-        translateY.value = withTiming(200, { duration: 200 });
-        opacity.value = withTiming(0, { duration: 200 }, (finished) => {
+        opacity.value = withTiming(0, { duration: 120 }, (finished) => {
           if (finished) runOnJS(dismiss)();
         });
       } else if (e.translationY < -40 || e.velocityY < -600) {
-        // Swipe up → open player immediately
-        translateY.value = withSpring(0, { damping: 20 });
+        translateY.value = withTiming(0, { duration: 80 });
         runOnJS(openPlayer)();
       } else {
         translateY.value = withSpring(0, { damping: 20 });

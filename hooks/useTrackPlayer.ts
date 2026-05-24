@@ -175,6 +175,11 @@ export function useTrackPlayer() {
 
   const clearError = () => setTrackError(null);
 
+  const dismiss = () => {
+    player.pause();
+    setHasStartedPlayback(false);
+  };
+
   const handlePlayPause = () => {
     if (!currentTrack) return;
     if (status.playing) {
@@ -212,6 +217,7 @@ export function useTrackPlayer() {
     isLoadingLyrics,
     trackError,
     clearError,
+    dismiss,
     handlePlayPause,
     formatTime,
     playSpotifyTrack,

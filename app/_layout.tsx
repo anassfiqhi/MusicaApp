@@ -1,5 +1,6 @@
 import { Stack, useSegments } from 'expo-router';
 import { Platform, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { TrackPlayerProvider } from '../context/TrackPlayerContext';
@@ -27,6 +28,7 @@ function FloatingMiniPlayer() {
 
 export default function RootLayout() {
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
       <DownloadsProvider>
       <TrackPlayerProvider>
@@ -46,5 +48,6 @@ export default function RootLayout() {
       </TrackPlayerProvider>
       </DownloadsProvider>
     </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

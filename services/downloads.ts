@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
 import { getStreamUrl, serverDownloadTrack } from './api';
 
 const DOWNLOADS_DIR = `${FileSystem.documentDirectory}musica-downloads/`;
@@ -46,35 +47,80 @@ export async function startDownload(
 ): Promise<DownloadedTrack> {
   await ensureDir();
 
-  console.log(`[download] start — "${track.title}" id=${track.id}`);
-  onProgress(-1);
+  const localPath = `${DOWNLOADS_DIR}${track.id}.mp3`;
 
-  console.log(`[download] POST /download — Tidal server-side fetch`);
+  // Step 1: Tell server to prepare the file via yt-dlp (blocks until ready)
+  onProgress(-1);
+  console.log(`[download] POST /download — "${track.title}"`);
   await serverDownloadTrack({
     id: track.id,
     title: track.title,
     artist: track.artist,
     artworkUrl: track.artworkUrl,
   });
-  console.log(`[download] server download complete`);
+  console.log(`[download] server ready, downloading to device`);
+
+  // Step 2: Download the MP3 from the server to the device with progress
+  onProgress(0);
+  const streamUrl = getStreamUrl(track.id);
+  const resumable = FileSystem.createDownloadResumable(
+    streamUrl,
+    localPath,
+    {},
+    ({ totalBytesWritten, totalBytesExpectedToWrite }) => {
+      if (totalBytesExpectedToWrite > 0) {
+        onProgress(totalBytesWritten / totalBytesExpectedToWrite);
+      }
+    }
+  );
+
+  const result = await resumable.downloadAsync();
+  if (!result || result.status !== 200) {
+    throw new Error(`Download failed — HTTP ${result?.status ?? 'unknown'}`);
+  }
+
+  const info = await FileSystem.getInfoAsync(localPath, { size: true });
+  const fileSizeBytes = info.exists && 'size' in info ? (info.size ?? 0) : 0;
+
+  // Step 3: Save to device media library so it appears in the file explorer
+  try {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status === 'granted') {
+      await MediaLibrary.saveToLibraryAsync(localPath);
+      console.log(`[download] saved to media library`);
+    }
+  } catch (e) {
+    console.log(`[download] media library save skipped:`, e);
+  }
 
   const entry: DownloadedTrack = {
     id: track.id,
     title: track.title,
     artist: track.artist,
     artworkUrl: track.artworkUrl,
-    filePath: getStreamUrl(track.id),
+    filePath: localPath,
     downloadedAt: Date.now(),
-    fileSizeBytes: 0,
+    fileSizeBytes,
   };
 
   const current = await loadDownloads();
   await persistDownloads([entry, ...current.filter((d) => d.id !== track.id)]);
+
+  console.log(`[download] complete — "${track.title}" (${fileSizeBytes} bytes)`);
   return entry;
 }
 
 export async function removeDownload(trackId: string): Promise<DownloadedTrack[]> {
   const list = await loadDownloads();
+  const entry = list.find((d) => d.id === trackId);
+
+  if (entry?.filePath && entry.filePath.startsWith('file://')) {
+    try {
+      const info = await FileSystem.getInfoAsync(entry.filePath);
+      if (info.exists) await FileSystem.deleteAsync(entry.filePath, { idempotent: true });
+    } catch {}
+  }
+
   const updated = list.filter((d) => d.id !== trackId);
   await persistDownloads(updated);
   return updated;

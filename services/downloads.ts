@@ -13,6 +13,7 @@ export interface DownloadedTrack {
   artworkUrl?: string;
   localArtworkPath?: string;
   lyrics?: Lyric[];
+  mediaLibraryAssetId?: string;
   filePath: string;
   downloadedAt: number;
   fileSizeBytes: number;
@@ -101,11 +102,13 @@ export async function startDownload(
   const localArtworkPath = artworkInfo.exists ? artworkPath : undefined;
 
   // Step 3: Save to device media library so it appears in the file explorer
+  let mediaLibraryAssetId: string | undefined;
   try {
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status === 'granted') {
-      await MediaLibrary.saveToLibraryAsync(audioPath);
-      console.log(`[download] saved to media library`);
+      const asset = await MediaLibrary.createAssetAsync(audioPath);
+      mediaLibraryAssetId = asset.id;
+      console.log(`[download] saved to media library — asset ${asset.id}`);
     }
   } catch (e) {
     console.log(`[download] media library save skipped:`, e);
@@ -118,6 +121,7 @@ export async function startDownload(
     artworkUrl: track.artworkUrl,
     localArtworkPath,
     lyrics: lyrics.length > 0 ? lyrics : undefined,
+    mediaLibraryAssetId,
     filePath: audioPath,
     downloadedAt: Date.now(),
     fileSizeBytes,
@@ -136,11 +140,17 @@ export async function removeDownload(trackId: string): Promise<DownloadedTrack[]
 
   if (entry) {
     await Promise.all([
-      entry.filePath?.startsWith('file://')
+      // Delete local audio file
+      entry.filePath
         ? FileSystem.deleteAsync(entry.filePath, { idempotent: true }).catch(() => {})
         : Promise.resolve(),
+      // Delete local artwork file
       entry.localArtworkPath
         ? FileSystem.deleteAsync(entry.localArtworkPath, { idempotent: true }).catch(() => {})
+        : Promise.resolve(),
+      // Remove from device media library
+      entry.mediaLibraryAssetId
+        ? MediaLibrary.deleteAssetsAsync([entry.mediaLibraryAssetId]).catch(() => {})
         : Promise.resolve(),
     ]);
   }

@@ -173,6 +173,8 @@ export function useTrackPlayer() {
     }
   }, [status.didJustFinish, goToSpotifyNext]);
 
+  const clearError = () => setTrackError(null);
+
   const handlePlayPause = () => {
     if (!currentTrack) return;
     if (status.playing) {
@@ -209,6 +211,7 @@ export function useTrackPlayer() {
     isLoadingTrack: isLoadingTrack || status.isBuffering,
     isLoadingLyrics,
     trackError,
+    clearError,
     handlePlayPause,
     formatTime,
     playSpotifyTrack,

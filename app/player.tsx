@@ -7,6 +7,7 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -41,6 +42,7 @@ export default function PlayerScreen() {
     isLoadingTrack,
     isLoadingLyrics,
     trackError,
+    clearError,
     handlePlayPause,
     formatTime,
     goToNext,
@@ -93,23 +95,17 @@ export default function PlayerScreen() {
           <View style={[styles.inner, width >= 768 && styles.innerWide]}>
             <AlbumArt source={currentTrack.artwork} />
             <TrackDetails title={currentTrack.title} artist={currentTrack.artist} />
-            {trackError ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{trackError}</Text>
-              </View>
-            ) : (
-              <PlayerControls
-                player={player}
-                status={status}
-                handlePlayPause={handlePlayPause}
-                formatTime={formatTime}
-                onPrev={goToPrev}
-                onNext={goToNext}
-                isLoading={isLoadingTrack}
-                hasPrev={hasPrev}
-                hasNext={hasNext}
-              />
-            )}
+            <PlayerControls
+              player={player}
+              status={status}
+              handlePlayPause={handlePlayPause}
+              formatTime={formatTime}
+              onPrev={goToPrev}
+              onNext={goToNext}
+              isLoading={isLoadingTrack}
+              hasPrev={hasPrev}
+              hasNext={hasNext}
+            />
             <LyricsView currentTime={status.currentTime} lyrics={currentTrack.lyrics} isLoading={isLoadingLyrics} />
 
             {/* Similar tracks */}
@@ -146,6 +142,23 @@ export default function PlayerScreen() {
           </View>
         </ScrollView>
       </View>
+
+      <Modal
+        visible={!!trackError}
+        transparent
+        animationType="fade"
+        onRequestClose={clearError}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Playback Error</Text>
+            <Text style={styles.modalMessage}>{trackError}</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={clearError} activeOpacity={0.8}>
+              <Text style={styles.modalButtonText}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -192,19 +205,43 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#282828',
   },
-  errorBox: {
-    marginTop: 32,
-    padding: 16,
-    backgroundColor: 'rgba(255,60,60,0.15)',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,60,60,0.3)',
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
   },
-  errorText: {
+  modalCard: {
+    backgroundColor: '#1e1e1e',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    alignItems: 'center',
+    gap: 12,
+  },
+  modalTitle: {
     color: '#ff6b6b',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalMessage: {
+    color: '#ccc',
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  modalButton: {
+    marginTop: 8,
+    backgroundColor: '#ff4444',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 32,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   recInfo: {
     flex: 1,

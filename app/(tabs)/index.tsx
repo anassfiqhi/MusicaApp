@@ -81,23 +81,12 @@ export default function LibraryScreen() {
           </View>
         </View>
 
-        {downloads.length === 0 ? (
-          <View style={styles.empty}>
-            <Ionicons name="musical-notes-outline" size={64} color="#535353" />
-            <Text style={styles.emptyTitle}>Your library is empty</Text>
-            <Text style={styles.emptySubtitle}>
-              Download tracks from Search or Discover to build your library
-            </Text>
-            <TouchableOpacity style={styles.discoverBtn} onPress={() => router.push('/(tabs)/discover')}>
-              <Text style={styles.discoverBtnText}>Browse Discover</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
-          >
-            {/* Quick-access grid */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
+        >
+          {/* Quick-access grid — only when downloads exist */}
+          {downloads.length > 0 && (
             <View style={[styles.grid, isWide && styles.gridWide]}>
               {gridTracks.map((d) => (
                 <TouchableOpacity
@@ -114,6 +103,7 @@ export default function LibraryScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+          )}
 
             {/* My Playlists */}
             <View style={styles.sectionHeader}>
@@ -205,8 +195,14 @@ export default function LibraryScreen() {
                 </TouchableOpacity>
               </View>
             ))}
-          </ScrollView>
-        )}
+
+          {downloads.length === 0 && (
+            <TouchableOpacity style={styles.emptyDownloads} onPress={() => router.push('/(tabs)/discover')}>
+              <Ionicons name="arrow-down-circle-outline" size={28} color="#535353" />
+              <Text style={styles.emptyDownloadsText}>Browse Discover to download tracks</Text>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
 
       </View>
 
@@ -258,24 +254,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  empty: {
-    flex: 1,
+  emptyDownloads: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingHorizontal: 32,
-    paddingBottom: 80,
+    gap: 10,
+    paddingVertical: 16,
   },
-  emptyTitle: { color: 'white', fontSize: 20, fontWeight: '600', textAlign: 'center' },
-  emptySubtitle: { color: '#9B9B9B', fontSize: 14, textAlign: 'center', lineHeight: 20 },
-  discoverBtn: {
-    marginTop: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
-    backgroundColor: '#1DB954',
-  },
-  discoverBtnText: { color: '#000', fontWeight: '700', fontSize: 14 },
+  emptyDownloadsText: { color: '#535353', fontSize: 14 },
   scrollContent: {},
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 32 },
   gridWide: { gap: 10, marginBottom: 24 },

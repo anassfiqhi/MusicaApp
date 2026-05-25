@@ -5,6 +5,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { StatusBar } from 'expo-status-bar';
 import { TrackPlayerProvider } from '../context/TrackPlayerContext';
 import { DownloadsProvider } from '../context/DownloadsContext';
+import { PlaylistsProvider } from '../context/PlaylistsContext';
 import MiniPlayer from '@/components/MiniPlayer';
 
 const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 49 : 56;
@@ -31,6 +32,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
       <DownloadsProvider>
+      <PlaylistsProvider>
       <TrackPlayerProvider>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }}>
@@ -43,9 +45,14 @@ export default function RootLayout() {
             name="playlist/[id]"
             options={{ animation: 'slide_from_right' }}
           />
+          <Stack.Screen
+            name="my-playlist/[id]"
+            options={{ animation: 'slide_from_right' }}
+          />
         </Stack>
         <FloatingMiniPlayer />
       </TrackPlayerProvider>
+      </PlaylistsProvider>
       </DownloadsProvider>
     </SafeAreaProvider>
     </GestureHandlerRootView>

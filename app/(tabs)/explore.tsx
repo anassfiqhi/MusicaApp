@@ -1,6 +1,8 @@
 import { searchTracks, prefetchTrack, getStreamUrl, type SpotifyTrack } from '@/services/api';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { useDownloads } from '@/context/DownloadsContext';
+import AddToPlaylistModal from '@/components/AddToPlaylistModal';
+import TrackOptionsSheet from '@/components/TrackOptionsSheet';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -30,6 +32,8 @@ export default function ExploreScreen() {
   const [results, setResults] = useState<SpotifyTrack[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [optionsTrack, setOptionsTrack] = useState<SpotifyTrack | null>(null);
+  const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
 
   const handleTrackPress = useCallback((track: SpotifyTrack) => {
     playSpotifyTrack(track);
@@ -130,11 +134,31 @@ export default function ExploreScreen() {
                     <Ionicons name="arrow-down-circle-outline" size={20} color="#9B9B9B" />
                   )}
                 </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setOptionsTrack(item)}
+                  style={styles.dlBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  activeOpacity={0.6}
+                >
+                  <Ionicons name="ellipsis-vertical" size={20} color="#9B9B9B" />
+                </TouchableOpacity>
               </View>
             );
           }}
         />
       )}
+
+      <TrackOptionsSheet
+        visible={optionsTrack !== null}
+        track={optionsTrack}
+        onClose={() => setOptionsTrack(null)}
+        onAddToPlaylist={() => setAddTrack(optionsTrack)}
+      />
+      <AddToPlaylistModal
+        visible={addTrack !== null}
+        track={addTrack}
+        onClose={() => setAddTrack(null)}
+      />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,9 @@ import { useDownloads } from '@/context/DownloadsContext';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { formatBytes } from '@/services/downloads';
 import type { DownloadedTrack } from '@/services/downloads';
+import type { SpotifyTrack } from '@/services/api';
+import AddToPlaylistModal from '@/components/AddToPlaylistModal';
+import TrackOptionsSheet from '@/components/TrackOptionsSheet';
 
 function getArtwork(d: DownloadedTrack) {
   return d.artworkUrl ? { uri: d.artworkUrl } : require('@/assets/images/playlist/album_art.png');
@@ -32,6 +35,17 @@ export default function DownloadsScreen() {
   const { downloads, remove } = useDownloads();
   const { playLocalTrack, currentTrack } = useTrackPlayerContext();
   const isWide = width >= 768;
+  const [optionsTrack, setOptionsTrack] = useState<SpotifyTrack | null>(null);
+  const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
+
+  const toSpotifyTrack = (d: DownloadedTrack): SpotifyTrack => ({
+    id: d.id,
+    name: d.title,
+    artists: d.artist,
+    album_name: '',
+    images: d.artworkUrl ?? '',
+    duration_ms: 0,
+  });
 
   const handlePlay = (d: DownloadedTrack) => {
     playLocalTrack(d);
@@ -103,6 +117,13 @@ export default function DownloadsScreen() {
                   </View>
 
                   <TouchableOpacity
+                    onPress={() => setOptionsTrack(toSpotifyTrack(d))}
+                    style={styles.actionBtn}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="ellipsis-vertical" size={isWide ? 18 : 20} color="#9B9B9B" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     onPress={() => handleDelete(d)}
                     style={styles.deleteBtn}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -115,6 +136,24 @@ export default function DownloadsScreen() {
           </ScrollView>
         )}
       </View>
+
+      <TrackOptionsSheet
+        visible={optionsTrack !== null}
+        track={optionsTrack}
+        onClose={() => setOptionsTrack(null)}
+        onAddToPlaylist={() => setAddTrack(optionsTrack)}
+        extraOptions={[{
+          icon: 'trash-outline',
+          label: 'Remove download',
+          destructive: true,
+          onPress: () => optionsTrack && remove(optionsTrack.id),
+        }]}
+      />
+      <AddToPlaylistModal
+        visible={addTrack !== null}
+        track={addTrack}
+        onClose={() => setAddTrack(null)}
+      />
     </LinearGradient>
   );
 }
@@ -154,5 +193,6 @@ const styles = StyleSheet.create({
   artist: { color: '#9B9B9B', fontSize: 13 },
   artistWide: { fontSize: 11 },
   meta: { color: '#535353', fontSize: 11, marginTop: 2 },
+  actionBtn: { padding: 8 },
   deleteBtn: { padding: 8 },
 });

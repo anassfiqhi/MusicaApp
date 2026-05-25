@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,12 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { useDownloads } from '@/context/DownloadsContext';
+import { usePlaylists } from '@/context/PlaylistsContext';
 import type { DownloadedTrack } from '@/services/downloads';
+import type { SpotifyTrack } from '@/services/api';
+import AddToPlaylistModal from '@/components/AddToPlaylistModal';
+import TrackOptionsSheet from '@/components/TrackOptionsSheet';
+import CreatePlaylistModal from '@/components/CreatePlaylistModal';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -34,11 +39,31 @@ export default function LibraryScreen() {
   const { width } = useWindowDimensions();
   const { playLocalTrack, currentTrack } = useTrackPlayerContext();
   const { downloads, remove } = useDownloads();
+  const { playlists, create: createPlaylist } = usePlaylists();
   const isWide = width >= 768;
+
+  const [creatingPlaylist, setCreatingPlaylist] = useState(false);
+  const [optionsTrack, setOptionsTrack] = useState<SpotifyTrack | null>(null);
+  const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
+
+  const toSpotifyTrack = (d: DownloadedTrack): SpotifyTrack => ({
+    id: d.id,
+    name: d.title,
+    artists: d.artist,
+    album_name: '',
+    images: d.artworkUrl ?? '',
+    duration_ms: 0,
+  });
 
   const handlePlay = (d: DownloadedTrack) => {
     playLocalTrack(d);
     router.push('/player');
+  };
+
+  const handleCreatePlaylist = async (name: string) => {
+    const playlist = await createPlaylist(name);
+    setCreatingPlaylist(false);
+    router.push(`/my-playlist/${playlist.id}`);
   };
 
   const gridTracks = downloads.slice(0, 6);
@@ -90,7 +115,48 @@ export default function LibraryScreen() {
               ))}
             </View>
 
-            <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide]}>
+            {/* My Playlists */}
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide]}>
+                My Playlists
+              </Text>
+              <TouchableOpacity onPress={() => setCreatingPlaylist(true)} style={styles.addBtn}>
+                <Ionicons name="add" size={22} color="#1DB954" />
+              </TouchableOpacity>
+            </View>
+            {playlists.length === 0 ? (
+              <TouchableOpacity style={styles.emptyPlaylist} onPress={() => setCreatingPlaylist(true)}>
+                <Ionicons name="add-circle-outline" size={32} color="#535353" />
+                <Text style={styles.emptyPlaylistText}>Create a playlist</Text>
+              </TouchableOpacity>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.playlistRow} contentContainerStyle={{ gap: 12, paddingRight: 16 }}>
+                <TouchableOpacity style={styles.newPlaylistCard} onPress={() => setCreatingPlaylist(true)}>
+                  <Ionicons name="add" size={32} color="#9B9B9B" />
+                </TouchableOpacity>
+                {playlists.map(p => {
+                  const cover = p.tracks[0]?.images;
+                  return (
+                    <TouchableOpacity
+                      key={p.id}
+                      style={styles.playlistCard}
+                      onPress={() => router.push(`/my-playlist/${p.id}`)}
+                      activeOpacity={0.8}
+                    >
+                      <Image
+                        source={cover ? { uri: cover } : PLACEHOLDER}
+                        style={styles.playlistCardArt}
+                        contentFit="cover"
+                      />
+                      <Text style={styles.playlistCardName} numberOfLines={2}>{p.name}</Text>
+                      <Text style={styles.playlistCardMeta}>{p.tracks.length} tracks</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
+
+            <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide, { marginTop: 24 }]}>
               Downloads
             </Text>
 
@@ -127,6 +193,14 @@ export default function LibraryScreen() {
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity
+                  onPress={() => setOptionsTrack(toSpotifyTrack(d))}
+                  style={styles.removeBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  activeOpacity={0.6}
+                >
+                  <Ionicons name="ellipsis-vertical" size={isWide ? 18 : 20} color="#9B9B9B" />
+                </TouchableOpacity>
+                <TouchableOpacity
                   onPress={() => remove(d.id)}
                   style={styles.removeBtn}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -140,6 +214,31 @@ export default function LibraryScreen() {
         )}
 
       </View>
+
+      <TrackOptionsSheet
+        visible={optionsTrack !== null}
+        track={optionsTrack}
+        onClose={() => setOptionsTrack(null)}
+        onAddToPlaylist={() => setAddTrack(optionsTrack)}
+        extraOptions={[{
+          icon: 'checkmark-circle-outline',
+          label: 'Remove from library',
+          destructive: true,
+          onPress: () => optionsTrack && remove(optionsTrack.id),
+        }]}
+      />
+      <AddToPlaylistModal
+        visible={addTrack !== null}
+        track={addTrack}
+        onClose={() => setAddTrack(null)}
+      />
+
+      <CreatePlaylistModal
+        visible={creatingPlaylist}
+        onCancel={() => setCreatingPlaylist(false)}
+        onCreate={handleCreatePlaylist}
+      />
+
     </LinearGradient>
   );
 }
@@ -222,4 +321,29 @@ const styles = StyleSheet.create({
   trackArtist: { color: '#b3b3b3', fontSize: 13, marginTop: 2 },
   trackArtistWide: { fontSize: 11 },
   removeBtn: { padding: 4, alignItems: 'center', justifyContent: 'center', minWidth: 28 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  addBtn: { padding: 4 },
+  playlistRow: { marginBottom: 8 },
+  newPlaylistCard: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+    backgroundColor: '#282828',
+    borderWidth: 1,
+    borderColor: '#535353',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playlistCard: { width: 120 },
+  playlistCardArt: { width: 120, height: 120, borderRadius: 8, backgroundColor: '#282828' },
+  playlistCardName: { color: '#fff', fontSize: 13, fontWeight: '600', marginTop: 6 },
+  playlistCardMeta: { color: '#9B9B9B', fontSize: 12, marginTop: 2 },
+  emptyPlaylist: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    marginBottom: 8,
+  },
+  emptyPlaylistText: { color: '#535353', fontSize: 14 },
 });

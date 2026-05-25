@@ -16,6 +16,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AddToPlaylistModal from '@/components/AddToPlaylistModal';
+import TrackOptionsSheet from '@/components/TrackOptionsSheet';
 
 function formatFollowers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -43,6 +45,8 @@ export default function PlaylistScreen() {
   const [totalTracks, setTotalTracks] = useState(0);
   const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [optionsTrack, setOptionsTrack] = useState<SpotifyTrack | null>(null);
+  const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
 
   useEffect(() => {
     getPlaylist(id).then((data) => {
@@ -176,6 +180,14 @@ export default function PlaylistScreen() {
                     <Ionicons name="arrow-down-circle-outline" size={20} color="#9B9B9B" />
                   )}
                 </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setOptionsTrack(track)}
+                  style={styles.dlBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  activeOpacity={0.6}
+                >
+                  <Ionicons name="ellipsis-vertical" size={20} color="#9B9B9B" />
+                </TouchableOpacity>
               </View>
             );
           })
@@ -190,6 +202,17 @@ export default function PlaylistScreen() {
         <Ionicons name="chevron-back" size={28} color="#fff" />
       </TouchableOpacity>
 
+      <TrackOptionsSheet
+        visible={optionsTrack !== null}
+        track={optionsTrack}
+        onClose={() => setOptionsTrack(null)}
+        onAddToPlaylist={() => setAddTrack(optionsTrack)}
+      />
+      <AddToPlaylistModal
+        visible={addTrack !== null}
+        track={addTrack}
+        onClose={() => setAddTrack(null)}
+      />
     </View>
   );
 }

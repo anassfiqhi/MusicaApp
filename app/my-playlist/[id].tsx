@@ -7,12 +7,15 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { usePlaylists } from '@/context/PlaylistsContext';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
+
+const PLACEHOLDER = require('@/assets/images/playlist/album_art.png');
 
 function formatDuration(ms: number): string {
   const m = Math.floor(ms / 60000);

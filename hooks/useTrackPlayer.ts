@@ -148,6 +148,22 @@ export function useTrackPlayer(
     }
   }, [player]);
 
+  // Play downloaded tracks as a queue starting at startIndex.
+  // Converts to virtual SpotifyTrack entries — playSpotifyTrackCore resolves each to its local file.
+  const playLocalPlaylist = useCallback((tracks: DownloadedTrack[], startIndex: number) => {
+    const queue: SpotifyTrack[] = tracks.map(d => ({
+      id: d.id,
+      name: d.title,
+      artists: d.artist,
+      album_name: '',
+      images: d.localArtworkPath ?? d.artworkUrl ?? '',
+      duration_ms: 0,
+    }));
+    spotifyQueueRef.current = queue;
+    spotifyQueueIndexRef.current = startIndex;
+    playSpotifyTrackCore(queue[startIndex]);
+  }, [playSpotifyTrackCore]);
+
   // Play a single Spotify track (no queue)
   const playSpotifyTrack = useCallback((spotifyTrack: SpotifyTrack) => {
     spotifyQueueRef.current = [];
@@ -254,6 +270,7 @@ export function useTrackPlayer(
     playSpotifyTrack,
     playSpotifyPlaylist,
     playLocalTrack,
+    playLocalPlaylist,
     goToNext,
     goToPrev,
     hasNext,

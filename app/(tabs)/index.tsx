@@ -37,7 +37,7 @@ function artwork(d: DownloadedTrack) {
 export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { playLocalTrack, currentTrack } = useTrackPlayerContext();
+  const { playLocalPlaylist, currentTrack } = useTrackPlayerContext();
   const { downloads, remove } = useDownloads();
   const { playlists, create: createPlaylist } = usePlaylists();
   const isWide = width >= 768;
@@ -56,7 +56,8 @@ export default function LibraryScreen() {
   });
 
   const handlePlay = (d: DownloadedTrack) => {
-    playLocalTrack(d);
+    const index = downloads.indexOf(d);
+    playLocalPlaylist(downloads, index >= 0 ? index : 0);
     router.push('/player');
   };
 

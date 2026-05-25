@@ -4,7 +4,9 @@ import { type Track } from '../data/trackData';
 import { getStreamUrl, getLyrics, prefetchTrack, type SpotifyTrack } from '../services/api';
 import type { DownloadedTrack } from '../services/downloads';
 
-export function useTrackPlayer() {
+export function useTrackPlayer(
+  getDownloaded?: (id: string) => DownloadedTrack | undefined
+) {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
@@ -37,6 +39,33 @@ export function useTrackPlayer() {
     setHasStartedPlayback(true);
     setIsLoadingTrack(true);
     setTrackError(null);
+
+    // Use local file if downloaded — includes cached lyrics and artwork
+    const downloaded = getDownloaded?.(spotifyTrack.id);
+    if (downloaded) {
+      const artworkUri = downloaded.localArtworkPath ?? downloaded.artworkUrl;
+      const track: Track = {
+        id: downloaded.id,
+        title: downloaded.title,
+        artist: downloaded.artist,
+        audioSource: { uri: downloaded.filePath },
+        artwork: artworkUri ? { uri: artworkUri } : require('../assets/images/playlist/album_art.png'),
+        gradientColors: ['#0a1a0a', '#1a1a1a', '#000000'],
+        lyrics: downloaded.lyrics,
+      };
+      setCurrentTrack(track);
+      player.replace({ uri: downloaded.filePath });
+      player.play();
+      if (player.setActiveForLockScreen) {
+        player.setActiveForLockScreen(true, {
+          title: downloaded.title,
+          artist: downloaded.artist,
+          artworkUrl: artworkUri,
+        });
+      }
+      setIsLoadingLyrics(false);
+      return;
+    }
 
     const url = getStreamUrl(spotifyTrack.id);
     console.log(`[stream] loading "${spotifyTrack.name}" — ${url}`);
@@ -85,7 +114,7 @@ export function useTrackPlayer() {
       })
       .catch(() => {})
       .finally(() => setIsLoadingLyrics(false));
-  }, [player]);
+  }, [player, getDownloaded]);
 
   // Play a downloaded track — uses local file, artwork, and cached lyrics directly.
   const playLocalTrack = useCallback((downloaded: DownloadedTrack) => {

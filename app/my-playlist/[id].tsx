@@ -7,15 +7,12 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { usePlaylists } from '@/context/PlaylistsContext';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
-
-const PLACEHOLDER = require('@/assets/images/playlist/album_art.png');
 
 function formatDuration(ms: number): string {
   const m = Math.floor(ms / 60000);
@@ -43,7 +40,6 @@ export default function MyPlaylistScreen() {
     );
   }
 
-  const cover = playlist.tracks[0]?.images;
   const coverSize = width;
 
   const handlePlay = (index: number) => {
@@ -74,16 +70,13 @@ export default function MyPlaylistScreen() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
 
-        {/* Cover + gradient */}
-        <View style={{ width: coverSize, height: coverSize * 0.7 }}>
-          {cover
-            ? <Image source={{ uri: cover }} style={{ width: coverSize, height: coverSize * 0.7 }} contentFit="cover" />
-            : <View style={[{ width: coverSize, height: coverSize * 0.7 }, styles.coverPlaceholder]} />
-          }
+        {/* Cover placeholder */}
+        <View style={[{ width: coverSize, height: coverSize * 0.6 }, styles.coverPlaceholder]}>
+          <Ionicons name="musical-notes" size={80} color="#3a3a3a" />
           <LinearGradient
             colors={['transparent', '#121212']}
             style={StyleSheet.absoluteFill}
-            start={{ x: 0, y: 0.4 }}
+            start={{ x: 0, y: 0.5 }}
             end={{ x: 0, y: 1 }}
           />
         </View>
@@ -161,7 +154,7 @@ export default function MyPlaylistScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#121212' },
-  coverPlaceholder: { backgroundColor: '#282828' },
+  coverPlaceholder: { backgroundColor: '#1a1a1a', alignItems: 'center', justifyContent: 'center' },
   info: { paddingHorizontal: 16, paddingTop: 12, gap: 6 },
   playlistTitle: { color: '#fff', fontSize: 22, fontWeight: '700', letterSpacing: -0.3 },
   meta: { color: '#9B9B9B', fontSize: 13, marginTop: 2 },

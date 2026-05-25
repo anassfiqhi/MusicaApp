@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { usePlaylists } from '../context/PlaylistsContext';
 import type { SpotifyTrack } from '../services/api';
@@ -20,8 +19,6 @@ interface Props {
   track: SpotifyTrack | null;
   onClose: () => void;
 }
-
-const PLACEHOLDER = require('../assets/images/playlist/album_art.png');
 
 export default function AddToPlaylistModal({ visible, track, onClose }: Props) {
   const { playlists, create, addTrack, playlistsContaining } = usePlaylists();
@@ -79,7 +76,6 @@ export default function AddToPlaylistModal({ visible, track, onClose }: Props) {
           keyExtractor={p => p.id}
           style={styles.list}
           renderItem={({ item }) => {
-            const cover = item.tracks[0]?.images;
             const added = inPlaylists.has(item.id);
             return (
               <TouchableOpacity
@@ -87,11 +83,9 @@ export default function AddToPlaylistModal({ visible, track, onClose }: Props) {
                 onPress={() => !added && handleAdd(item.id)}
                 activeOpacity={added ? 1 : 0.7}
               >
-                <Image
-                  source={cover ? { uri: cover } : PLACEHOLDER}
-                  style={styles.cover}
-                  contentFit="cover"
-                />
+                <View style={styles.cover}>
+                  <Ionicons name="musical-notes" size={22} color="#3a3a3a" />
+                </View>
                 <View style={styles.rowInfo}>
                   <Text style={styles.rowName} numberOfLines={1}>{item.name}</Text>
                   <Text style={styles.rowMeta}>{item.tracks.length} tracks</Text>
@@ -152,7 +146,7 @@ const styles = StyleSheet.create({
   newBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   list: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 8 },
-  cover: { width: 48, height: 48, borderRadius: 4, backgroundColor: '#282828' },
+  cover: { width: 48, height: 48, borderRadius: 4, backgroundColor: '#1a1a1a', alignItems: 'center', justifyContent: 'center' },
   rowInfo: { flex: 1 },
   rowName: { color: '#fff', fontSize: 15, fontWeight: '500' },
   rowMeta: { color: '#9B9B9B', fontSize: 13, marginTop: 2 },

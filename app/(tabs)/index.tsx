@@ -134,25 +134,20 @@ export default function LibraryScreen() {
                 <TouchableOpacity style={styles.newPlaylistCard} onPress={() => setCreatingPlaylist(true)}>
                   <Ionicons name="add" size={32} color="#9B9B9B" />
                 </TouchableOpacity>
-                {playlists.map(p => {
-                  const cover = p.tracks[0]?.images;
-                  return (
-                    <TouchableOpacity
-                      key={p.id}
-                      style={styles.playlistCard}
-                      onPress={() => router.push(`/my-playlist/${p.id}`)}
-                      activeOpacity={0.8}
-                    >
-                      <Image
-                        source={cover ? { uri: cover } : PLACEHOLDER}
-                        style={styles.playlistCardArt}
-                        contentFit="cover"
-                      />
-                      <Text style={styles.playlistCardName} numberOfLines={2}>{p.name}</Text>
-                      <Text style={styles.playlistCardMeta}>{p.tracks.length} tracks</Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                {playlists.map(p => (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={styles.playlistCard}
+                    onPress={() => router.push(`/my-playlist/${p.id}`)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.playlistCardArt}>
+                      <Ionicons name="musical-notes" size={36} color="#3a3a3a" />
+                    </View>
+                    <Text style={styles.playlistCardName} numberOfLines={2}>{p.name}</Text>
+                    <Text style={styles.playlistCardMeta}>{p.tracks.length} tracks</Text>
+                  </TouchableOpacity>
+                ))}
               </ScrollView>
             )}
 
@@ -335,7 +330,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   playlistCard: { width: 120 },
-  playlistCardArt: { width: 120, height: 120, borderRadius: 8, backgroundColor: '#282828' },
+  playlistCardArt: { width: 120, height: 120, borderRadius: 8, backgroundColor: '#1a1a1a', alignItems: 'center', justifyContent: 'center' },
   playlistCardName: { color: '#fff', fontSize: 13, fontWeight: '600', marginTop: 6 },
   playlistCardMeta: { color: '#9B9B9B', fontSize: 12, marginTop: 2 },
   emptyPlaylist: {

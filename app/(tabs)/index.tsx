@@ -172,7 +172,9 @@ export default function LibraryScreen() {
         {segment === 'downloads' && (
           downloads.length === 0 ? (
             <View style={styles.emptyDownloads}>
-              <Ionicons name="arrow-down-circle-outline" size={64} color="#535353" />
+              <View style={styles.emptyDownloadsArt}>
+                <Ionicons name="arrow-down-circle-outline" size={52} color="#1DB954" />
+              </View>
               <Text style={styles.emptyTitle}>No downloads yet</Text>
               <Text style={styles.emptySub}>
                 Tap the download icon on any track to save it for offline playback
@@ -400,15 +402,21 @@ const styles = StyleSheet.create({
 
   // ── Downloads ──
   emptyDownloads: {
-    flex: 1,
+    alignItems: 'center',
+    paddingTop: 60,
+    gap: 10,
+  },
+  emptyDownloadsArt: {
+    width: 96,
+    height: 96,
+    borderRadius: 12,
+    backgroundColor: 'rgba(29,185,84,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    paddingHorizontal: 32,
-    paddingBottom: 80,
+    marginBottom: 8,
   },
-  emptyTitle: { color: 'white', fontSize: 20, fontWeight: '600', textAlign: 'center' },
-  emptySub: { color: '#9B9B9B', fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { color: 'white', fontSize: 20, fontWeight: '700', textAlign: 'center' },
+  emptySub: { color: '#9B9B9B', fontSize: 14, textAlign: 'center' },
   discoverBtn: {
     marginTop: 8,
     paddingHorizontal: 24,

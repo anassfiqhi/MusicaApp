@@ -106,102 +106,117 @@ export default function LibraryScreen() {
             </View>
           )}
 
-            {/* My Playlists */}
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide]}>
-                My Playlists
-              </Text>
-              <TouchableOpacity onPress={() => setCreatingPlaylist(true)} style={styles.addBtn}>
-                <Ionicons name="add" size={22} color="#1DB954" />
+          {/* My Playlists */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide]}>
+              My Playlists
+            </Text>
+            <TouchableOpacity onPress={() => setCreatingPlaylist(true)} style={styles.addBtn}>
+              <Ionicons name="add" size={22} color="#1DB954" />
+            </TouchableOpacity>
+          </View>
+          {playlists.length === 0 ? (
+            <View style={styles.createCard}>
+              <Text style={styles.createCardTitle}>Create your first playlist</Text>
+              <Text style={styles.createCardSub}>It's easy, we'll help you</Text>
+              <TouchableOpacity style={styles.createCardBtn} onPress={() => setCreatingPlaylist(true)}>
+                <Text style={styles.createCardBtnText}>Create playlist</Text>
               </TouchableOpacity>
             </View>
-            {playlists.length === 0 ? (
-              <TouchableOpacity style={styles.emptyPlaylist} onPress={() => setCreatingPlaylist(true)}>
-                <Ionicons name="add-circle-outline" size={32} color="#535353" />
-                <Text style={styles.emptyPlaylistText}>Create a playlist</Text>
-              </TouchableOpacity>
-            ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.playlistRow} contentContainerStyle={{ gap: 12, paddingRight: 16 }}>
-                <TouchableOpacity style={styles.newPlaylistCard} onPress={() => setCreatingPlaylist(true)}>
-                  <Ionicons name="add" size={32} color="#9B9B9B" />
-                </TouchableOpacity>
-                {playlists.map(p => (
-                  <TouchableOpacity
-                    key={p.id}
-                    style={styles.playlistCard}
-                    onPress={() => router.push(`/my-playlist/${p.id}`)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.playlistCardArt}>
-                      <Ionicons name="musical-notes" size={36} color="#3a3a3a" />
-                    </View>
-                    <Text style={styles.playlistCardName} numberOfLines={2}>{p.name}</Text>
-                    <Text style={styles.playlistCardMeta}>{p.tracks.length} tracks</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-
-            <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide, { marginTop: 24 }]}>
-              Downloads
-            </Text>
-
-            {downloads.map((d) => (
-              <View
-                key={d.id}
-                style={[styles.trackRow, currentTrack?.id === d.id && styles.trackRowActive]}
-              >
+          ) : (
+            <ScrollView
+              scrollEnabled={playlists.length > 4}
+              showsVerticalScrollIndicator={false}
+              style={playlists.length > 4 ? styles.playlistList : undefined}
+              nestedScrollEnabled
+            >
+              {playlists.map(p => (
                 <TouchableOpacity
-                  style={styles.trackPressable}
-                  onPress={() => handlePlay(d)}
+                  key={p.id}
+                  style={styles.playlistRow}
+                  onPress={() => router.push(`/my-playlist/${p.id}`)}
                   activeOpacity={0.7}
                 >
-                  <Image
-                    source={artwork(d)}
-                    style={[styles.trackArtwork, isWide && styles.trackArtworkWide]}
-                    contentFit="cover"
-                    recyclingKey={d.id}
-                  />
-                  <View style={styles.trackInfo}>
-                    <Text
-                      style={[
-                        styles.trackTitle,
-                        isWide && styles.trackTitleWide,
-                        currentTrack?.id === d.id && styles.trackTitleActive,
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {d.title}
-                    </Text>
-                    <Text style={[styles.trackArtist, isWide && styles.trackArtistWide]}>
-                      {d.artist}
-                    </Text>
+                  <View style={[styles.playlistArt, isWide && styles.playlistArtWide]}>
+                    <Ionicons name="musical-notes" size={isWide ? 24 : 28} color="#9B9B9B" />
+                  </View>
+                  <View style={styles.playlistInfo}>
+                    <Text style={[styles.playlistName, isWide && styles.playlistNameWide]} numberOfLines={1}>{p.name}</Text>
+                    <Text style={[styles.playlistMeta, isWide && styles.playlistMetaWide]}>Playlist • {p.tracks.length} {p.tracks.length === 1 ? 'song' : 'songs'}</Text>
                   </View>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setOptionsTrack(toSpotifyTrack(d))}
-                  style={styles.removeBtn}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  activeOpacity={0.6}
-                >
-                  <Ionicons name="ellipsis-vertical" size={isWide ? 18 : 20} color="#9B9B9B" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => remove(d.id)}
-                  style={styles.removeBtn}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  activeOpacity={0.6}
-                >
-                  <Ionicons name="checkmark-circle" size={isWide ? 18 : 20} color="#1DB954" />
-                </TouchableOpacity>
-              </View>
-            ))}
+              ))}
+            </ScrollView>
+          )}
 
-          {downloads.length === 0 && (
-            <TouchableOpacity style={styles.emptyDownloads} onPress={() => router.push('/(tabs)/discover')}>
-              <Ionicons name="arrow-down-circle-outline" size={28} color="#535353" />
-              <Text style={styles.emptyDownloadsText}>Browse Discover to download tracks</Text>
-            </TouchableOpacity>
+          {/* Downloads */}
+          {downloads.length === 0 ? (
+            <View style={styles.emptyDownloads}>
+              <Ionicons name="musical-notes-outline" size={48} color="#535353" />
+              <Text style={styles.emptyDownloadsTitle}>No downloads yet</Text>
+              <Text style={styles.emptyDownloadsSub}>
+                Download tracks from Search or Discover to build your library
+              </Text>
+              <TouchableOpacity style={styles.discoverBtn} onPress={() => router.push('/(tabs)/discover')}>
+                <Text style={styles.discoverBtnText}>Browse Discover</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide, { marginTop: 24 }]}>
+                Downloads
+              </Text>
+              {downloads.map((d) => (
+                <View
+                  key={d.id}
+                  style={[styles.trackRow, currentTrack?.id === d.id && styles.trackRowActive]}
+                >
+                  <TouchableOpacity
+                    style={styles.trackPressable}
+                    onPress={() => handlePlay(d)}
+                    activeOpacity={0.7}
+                  >
+                    <Image
+                      source={artwork(d)}
+                      style={[styles.trackArtwork, isWide && styles.trackArtworkWide]}
+                      contentFit="cover"
+                      recyclingKey={d.id}
+                    />
+                    <View style={styles.trackInfo}>
+                      <Text
+                        style={[
+                          styles.trackTitle,
+                          isWide && styles.trackTitleWide,
+                          currentTrack?.id === d.id && styles.trackTitleActive,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {d.title}
+                      </Text>
+                      <Text style={[styles.trackArtist, isWide && styles.trackArtistWide]}>
+                        {d.artist}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setOptionsTrack(toSpotifyTrack(d))}
+                    style={styles.removeBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    activeOpacity={0.6}
+                  >
+                    <Ionicons name="ellipsis-vertical" size={isWide ? 18 : 20} color="#9B9B9B" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => remove(d.id)}
+                    style={styles.removeBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    activeOpacity={0.6}
+                  >
+                    <Ionicons name="checkmark-circle" size={isWide ? 18 : 20} color="#1DB954" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </>
           )}
         </ScrollView>
 
@@ -256,12 +271,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyDownloads: {
-    flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 32,
     gap: 10,
-    paddingVertical: 16,
+    marginTop: 16,
   },
-  emptyDownloadsText: { color: '#535353', fontSize: 14 },
+  emptyDownloadsTitle: { color: 'white', fontSize: 18, fontWeight: '600', textAlign: 'center' },
+  emptyDownloadsSub: { color: '#9B9B9B', fontSize: 13, textAlign: 'center', lineHeight: 19 },
+  discoverBtn: {
+    marginTop: 6,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: '#1DB954',
+  },
+  discoverBtnText: { color: '#000', fontWeight: '700', fontSize: 14 },
   scrollContent: {},
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 32 },
   gridWide: { gap: 10, marginBottom: 24 },
@@ -304,27 +329,41 @@ const styles = StyleSheet.create({
   removeBtn: { padding: 4, alignItems: 'center', justifyContent: 'center', minWidth: 28 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   addBtn: { padding: 4 },
-  playlistRow: { marginBottom: 8 },
-  newPlaylistCard: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
-    backgroundColor: '#282828',
-    borderWidth: 1,
-    borderColor: '#535353',
+  createCard: {
+    paddingVertical: 8,
+    marginBottom: 16,
+    gap: 6,
+  },
+  createCardTitle: { color: 'white', fontSize: 16, fontWeight: '700' },
+  createCardSub: { color: '#9B9B9B', fontSize: 13, marginBottom: 6 },
+  createCardBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#1DB954',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginTop: 4,
+  },
+  createCardBtnText: { color: '#000', fontWeight: '700', fontSize: 13 },
+  playlistList: { maxHeight: 72 * 4 },
+  playlistRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    gap: 12,
+  },
+  playlistArt: {
+    width: 56,
+    height: 56,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  playlistCard: { width: 120 },
-  playlistCardArt: { width: 120, height: 120, borderRadius: 8, backgroundColor: '#1a1a1a', alignItems: 'center', justifyContent: 'center' },
-  playlistCardName: { color: '#fff', fontSize: 13, fontWeight: '600', marginTop: 6 },
-  playlistCardMeta: { color: '#9B9B9B', fontSize: 12, marginTop: 2 },
-  emptyPlaylist: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 16,
-    marginBottom: 8,
-  },
-  emptyPlaylistText: { color: '#535353', fontSize: 14 },
+  playlistArtWide: { width: 46, height: 46 },
+  playlistInfo: { flex: 1 },
+  playlistName: { color: 'white', fontSize: 15, fontWeight: '600' },
+  playlistNameWide: { fontSize: 13 },
+  playlistMeta: { color: '#9B9B9B', fontSize: 13, marginTop: 2 },
+  playlistMetaWide: { fontSize: 11 },
 });

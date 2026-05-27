@@ -139,24 +139,38 @@ export async function removeDownload(trackId: string): Promise<DownloadedTrack[]
   const entry = list.find((d) => d.id === trackId);
 
   if (entry) {
+    console.log(`[remove] "${entry.title}"`);
+    console.log(`[remove] filePath:`, entry.filePath);
+    console.log(`[remove] localArtworkPath:`, entry.localArtworkPath);
+    console.log(`[remove] mediaLibraryAssetId:`, entry.mediaLibraryAssetId);
+
     await Promise.all([
       // Delete local audio file
       entry.filePath
-        ? FileSystem.deleteAsync(entry.filePath, { idempotent: true }).catch(() => {})
+        ? FileSystem.deleteAsync(entry.filePath, { idempotent: true })
+            .then(() => console.log(`[remove] audio file deleted`))
+            .catch((e) => console.warn(`[remove] audio file delete failed:`, e))
         : Promise.resolve(),
       // Delete local artwork file
       entry.localArtworkPath
-        ? FileSystem.deleteAsync(entry.localArtworkPath, { idempotent: true }).catch(() => {})
+        ? FileSystem.deleteAsync(entry.localArtworkPath, { idempotent: true })
+            .then(() => console.log(`[remove] artwork file deleted`))
+            .catch((e) => console.warn(`[remove] artwork file delete failed:`, e))
         : Promise.resolve(),
       // Remove from device media library
       entry.mediaLibraryAssetId
-        ? MediaLibrary.deleteAssetsAsync([entry.mediaLibraryAssetId]).catch(() => {})
+        ? MediaLibrary.deleteAssetsAsync([entry.mediaLibraryAssetId])
+            .then(() => console.log(`[remove] media library asset deleted`))
+            .catch((e) => console.warn(`[remove] media library delete failed:`, e))
         : Promise.resolve(),
     ]);
+  } else {
+    console.warn(`[remove] trackId "${trackId}" not found in index`);
   }
 
   const updated = list.filter((d) => d.id !== trackId);
   await persistDownloads(updated);
+  console.log(`[remove] index updated — ${updated.length} tracks remaining`);
   return updated;
 }
 

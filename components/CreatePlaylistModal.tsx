@@ -14,11 +14,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 interface Props {
   visible: boolean;
   initialName?: string;
+  title?: string;
+  confirmLabel?: string;
   onCancel: () => void;
   onCreate: (name: string) => void;
 }
 
-export default function CreatePlaylistModal({ visible, initialName = '', onCancel, onCreate }: Props) {
+export default function CreatePlaylistModal({ visible, initialName = '', title = 'Give your playlist a name', confirmLabel = 'Create', onCancel, onCreate }: Props) {
   const [name, setName] = useState(initialName);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function CreatePlaylistModal({ visible, initialName = '', onCance
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.inner}
         >
-          <Text style={styles.heading}>Give your playlist a name</Text>
+          <Text style={styles.heading}>{title}</Text>
 
           <TextInput
             style={styles.input}
@@ -58,7 +60,7 @@ export default function CreatePlaylistModal({ visible, initialName = '', onCance
               style={[styles.createBtn, !name.trim() && styles.createBtnDisabled]}
               onPress={handleCreate}
             >
-              <Text style={styles.createText}>Create</Text>
+              <Text style={styles.createText}>{confirmLabel}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

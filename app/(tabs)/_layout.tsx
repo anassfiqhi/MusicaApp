@@ -40,10 +40,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="downloads"
-        options={{
-          title: 'Downloads',
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="arrow.down.circle" color={color} />,
-        }}
+        options={{ href: null }}
       />
     </Tabs>
   );

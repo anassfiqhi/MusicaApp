@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePlaylists } from '../context/PlaylistsContext';
+import { useToast } from '../context/ToastContext';
 import type { SpotifyTrack } from '../services/api';
 import CreatePlaylistModal from './CreatePlaylistModal';
 
@@ -22,14 +23,16 @@ interface Props {
 
 export default function AddToPlaylistModal({ visible, track, onClose }: Props) {
   const { playlists, create, addTrack, playlistsContaining } = usePlaylists();
+  const { showToast } = useToast();
   const [showCreate, setShowCreate] = useState(false);
 
   const inPlaylists = track ? new Set(playlistsContaining(track.id)) : new Set<string>();
 
-  const handleAdd = async (playlistId: string) => {
+  const handleAdd = async (playlistId: string, playlistName: string) => {
     if (!track) return;
     await addTrack(playlistId, track);
     onClose();
+    showToast(`Added to ${playlistName}`);
   };
 
   const handleCreated = async (name: string) => {
@@ -37,6 +40,7 @@ export default function AddToPlaylistModal({ visible, track, onClose }: Props) {
     if (track) await addTrack(playlist.id, track);
     setShowCreate(false);
     onClose();
+    showToast(`Added to ${name}`);
   };
 
   const handleClose = () => {
@@ -80,7 +84,7 @@ export default function AddToPlaylistModal({ visible, track, onClose }: Props) {
             return (
               <TouchableOpacity
                 style={styles.row}
-                onPress={() => !added && handleAdd(item.id)}
+                onPress={() => !added && handleAdd(item.id, item.name)}
                 activeOpacity={added ? 1 : 0.7}
               >
                 <View style={styles.cover}>

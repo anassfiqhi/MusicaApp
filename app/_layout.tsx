@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { TrackPlayerProvider } from '../context/TrackPlayerContext';
 import { DownloadsProvider } from '../context/DownloadsContext';
 import { PlaylistsProvider } from '../context/PlaylistsContext';
+import { ToastProvider } from '../context/ToastContext';
 import MiniPlayer from '@/components/MiniPlayer';
 
 const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 49 : 56;
@@ -34,6 +35,7 @@ export default function RootLayout() {
       <DownloadsProvider>
       <PlaylistsProvider>
       <TrackPlayerProvider>
+      <ToastProvider>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
@@ -59,6 +61,7 @@ export default function RootLayout() {
           />
         </Stack>
         <FloatingMiniPlayer />
+      </ToastProvider>
       </TrackPlayerProvider>
       </PlaylistsProvider>
       </DownloadsProvider>

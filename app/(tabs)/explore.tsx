@@ -20,16 +20,75 @@ import { useDownloads } from '@/context/DownloadsContext';
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 import TrackOptionsSheet from '@/components/TrackOptionsSheet';
 
-const GENRES = [
-  { label: 'Pop',        color: '#E8115B', query: 'pop hits' },
-  { label: 'Hip-Hop',   color: '#BA5D07', query: 'hip hop rap' },
-  { label: 'Rock',       color: '#4B917D', query: 'rock classic' },
-  { label: 'Electronic', color: '#0D73EC', query: 'electronic dance' },
-  { label: 'R&B',        color: '#8D67AB', query: 'rnb soul' },
-  { label: 'Jazz',       color: '#1E3264', query: 'jazz' },
-  { label: 'Classical',  color: '#148A08', query: 'classical orchestra' },
-  { label: 'Latin',      color: '#E61E32', query: 'latin reggaeton' },
+type GenreItem = { label: string; color: string; query: string };
+type GenreSection = { title: string; items: GenreItem[] };
+
+const GENRE_SECTIONS: GenreSection[] = [
+  {
+    title: 'Genres',
+    items: [
+      { label: 'Pop',          color: '#E8115B', query: 'pop hits' },
+      { label: 'Hip-Hop',      color: '#BA5D07', query: 'hip hop rap' },
+      { label: 'Rock',         color: '#E91429', query: 'rock classic' },
+      { label: 'R&B',          color: '#8D67AB', query: 'rnb soul' },
+      { label: 'Electronic',   color: '#0D73EC', query: 'electronic dance' },
+      { label: 'Latin',        color: '#E61E32', query: 'latin reggaeton' },
+      { label: 'Country',      color: '#4B917D', query: 'country music' },
+      { label: 'Jazz',         color: '#1E3264', query: 'jazz' },
+      { label: 'Classical',    color: '#148A08', query: 'classical orchestra' },
+      { label: 'Metal',        color: '#509BF5', query: 'metal heavy' },
+      { label: 'Indie',        color: '#F59B23', query: 'indie alternative' },
+      { label: 'Alternative',  color: '#27856A', query: 'alternative rock' },
+      { label: 'K-Pop',        color: '#E8115B', query: 'kpop korean' },
+      { label: 'Afrobeats',    color: '#BA5D07', query: 'afrobeats afropop' },
+      { label: 'Reggae',       color: '#148A08', query: 'reggae' },
+      { label: 'Soul',         color: '#8D67AB', query: 'soul music' },
+      { label: 'Blues',        color: '#1E3264', query: 'blues music' },
+      { label: 'Folk',         color: '#4B917D', query: 'folk acoustic' },
+      { label: 'Funk',         color: '#E91429', query: 'funk' },
+      { label: 'Punk',         color: '#509BF5', query: 'punk rock' },
+    ],
+  },
+  {
+    title: 'Moods & Activities',
+    items: [
+      { label: 'Chill',        color: '#4B917D', query: 'chill relax' },
+      { label: 'Party',        color: '#E91429', query: 'party hits' },
+      { label: 'Workout',      color: '#E8115B', query: 'workout gym' },
+      { label: 'Focus',        color: '#1E3264', query: 'focus study concentration' },
+      { label: 'Sleep',        color: '#27856A', query: 'sleep ambient calm' },
+      { label: 'Happy',        color: '#F59B23', query: 'happy upbeat' },
+      { label: 'Romance',      color: '#E8115B', query: 'romantic love songs' },
+      { label: 'Sad',          color: '#509BF5', query: 'sad emotional' },
+    ],
+  },
+  {
+    title: 'Decades',
+    items: [
+      { label: '2010s',        color: '#0D73EC', query: '2010s hits' },
+      { label: '2000s',        color: '#E91429', query: '2000s hits' },
+      { label: '90s',          color: '#BA5D07', query: '90s hits' },
+      { label: '80s',          color: '#8D67AB', query: '80s hits' },
+      { label: '70s',          color: '#4B917D', query: '70s hits' },
+      { label: '60s',          color: '#1E3264', query: '60s hits' },
+    ],
+  },
+  {
+    title: 'Discover',
+    items: [
+      { label: 'Gaming',       color: '#509BF5', query: 'gaming music' },
+      { label: 'Anime',        color: '#E8115B', query: 'anime soundtrack' },
+      { label: 'Soundtrack',   color: '#1E3264', query: 'movie soundtrack film score' },
+      { label: 'Gospel',       color: '#148A08', query: 'gospel christian' },
+      { label: 'Trap',         color: '#BA5D07', query: 'trap music' },
+      { label: 'House',        color: '#0D73EC', query: 'house music' },
+      { label: 'Ambient',      color: '#27856A', query: 'ambient atmospheric' },
+      { label: 'Disco',        color: '#F59B23', query: 'disco' },
+    ],
+  },
 ];
+
+const ALL_GENRES = GENRE_SECTIONS.flatMap(s => s.items);
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
@@ -48,7 +107,7 @@ export default function ExploreScreen() {
   const [genreImages, setGenreImages] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    GENRES.forEach(async (g) => {
+    ALL_GENRES.forEach(async (g) => {
       try {
         const tracks = await searchTracks(g.query, 1);
         if (tracks[0]?.images) {
@@ -191,26 +250,31 @@ export default function ExploreScreen() {
       {/* ── Browse (no search yet) ── */}
       {!searched && !loading && (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
-          <Text style={styles.sectionLabel}>Browse all</Text>
-          <View style={styles.genreGrid}>
-            {GENRES.map(g => (
-              <TouchableOpacity
-                key={g.label}
-                style={[styles.genreCard, { backgroundColor: g.color, width: cardW }]}
-                onPress={() => handleGenre(g.label, g.query)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.genreLabel}>{g.label}</Text>
-                {genreImages[g.label] && (
-                  <Image
-                    source={{ uri: genreImages[g.label] }}
-                    style={styles.genreArt}
-                    contentFit="cover"
-                  />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
+          <Text style={styles.browseHeading}>Browse all</Text>
+          {GENRE_SECTIONS.map(section => (
+            <View key={section.title}>
+              <Text style={styles.sectionLabel}>{section.title}</Text>
+              <View style={styles.genreGrid}>
+                {section.items.map(g => (
+                  <TouchableOpacity
+                    key={g.label}
+                    style={[styles.genreCard, { backgroundColor: g.color, width: cardW }]}
+                    onPress={() => handleGenre(g.label, g.query)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.genreLabel}>{g.label}</Text>
+                    {genreImages[g.label] && (
+                      <Image
+                        source={{ uri: genreImages[g.label] }}
+                        style={styles.genreArt}
+                        contentFit="cover"
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ))}
         </ScrollView>
       )}
 
@@ -376,13 +440,21 @@ const styles = StyleSheet.create({
   noResultsTitle: { color: 'white', fontSize: 18, fontWeight: '700' },
   noResultsSub: { color: '#9B9B9B', fontSize: 14, textAlign: 'center', paddingHorizontal: 32 },
 
+  browseHeading: {
+    color: 'white',
+    fontSize: 22,
+    fontWeight: '800',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    marginTop: 4,
+  },
   sectionLabel: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     paddingHorizontal: 16,
-    marginBottom: 12,
-    marginTop: 4,
+    marginBottom: 10,
+    marginTop: 20,
   },
 
   genreGrid: {

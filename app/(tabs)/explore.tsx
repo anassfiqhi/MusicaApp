@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -45,6 +45,18 @@ export default function ExploreScreen() {
   const [searched, setSearched] = useState(false);
   const [optionsTrack, setOptionsTrack] = useState<SpotifyTrack | null>(null);
   const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
+  const [genreImages, setGenreImages] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    GENRES.forEach(async (g) => {
+      try {
+        const tracks = await searchTracks(g.query, 1);
+        if (tracks[0]?.images) {
+          setGenreImages(prev => ({ ...prev, [g.label]: tracks[0].images }));
+        }
+      } catch {}
+    });
+  }, []);
 
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) return;
@@ -189,6 +201,13 @@ export default function ExploreScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={styles.genreLabel}>{g.label}</Text>
+                {genreImages[g.label] && (
+                  <Image
+                    source={{ uri: genreImages[g.label] }}
+                    style={styles.genreArt}
+                    contentFit="cover"
+                  />
+                )}
               </TouchableOpacity>
             ))}
           </View>
@@ -376,13 +395,28 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: 8,
     padding: 12,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     overflow: 'hidden',
   },
   genreLabel: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
+    zIndex: 1,
+  },
+  genreArt: {
+    position: 'absolute',
+    width: 72,
+    height: 72,
+    borderRadius: 4,
+    bottom: -6,
+    right: -6,
+    transform: [{ rotate: '25deg' }],
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 6,
   },
 
   topCard: {

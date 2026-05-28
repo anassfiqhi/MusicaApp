@@ -24,6 +24,8 @@ import {
 } from '@/services/api';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { useDownloads } from '@/context/DownloadsContext';
+import TrackOptionsSheet from '@/components/TrackOptionsSheet';
+import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 
 const HEADER_HEIGHT = 300;
 const COLLAPSED_HEIGHT = 56;
@@ -51,6 +53,8 @@ export default function ArtistScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showAllTracks, setShowAllTracks] = useState(false);
+  const [optionsTrack, setOptionsTrack] = useState<SpotifyTrack | null>(null);
+  const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -303,6 +307,13 @@ export default function ArtistScreen() {
                       <Ionicons name="arrow-down-circle-outline" size={20} color="#535353" />
                     )}
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={(e) => { e.stopPropagation(); setOptionsTrack(track); }}
+                    style={styles.actionBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons name="ellipsis-vertical" size={18} color="#9B9B9B" />
+                  </TouchableOpacity>
                 </TouchableOpacity>
               );
             })}
@@ -353,6 +364,18 @@ export default function ArtistScreen() {
           </>
         )}
       </Animated.ScrollView>
+
+      <TrackOptionsSheet
+        visible={optionsTrack !== null}
+        track={optionsTrack}
+        onClose={() => setOptionsTrack(null)}
+        onAddToPlaylist={() => setAddTrack(optionsTrack)}
+      />
+      <AddToPlaylistModal
+        visible={addTrack !== null}
+        track={addTrack}
+        onClose={() => setAddTrack(null)}
+      />
     </View>
   );
 }

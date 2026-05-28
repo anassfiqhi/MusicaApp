@@ -306,18 +306,61 @@ export default function ExploreScreen() {
             <>
               {/* Top result card */}
               <Text style={styles.sectionLabel}>Top result</Text>
-              <TouchableOpacity
-                style={styles.topCard}
-                onPress={() => handleTrackPress(topTrack)}
-                activeOpacity={0.85}
-              >
-                <Image source={{ uri: topTrack.images }} style={styles.topCardArt} contentFit="cover" />
-                <Text style={styles.topCardName} numberOfLines={2}>{topTrack.name}</Text>
-                <Text style={styles.topCardArtist} numberOfLines={1}>{topTrack.artists}</Text>
-                <TouchableOpacity style={styles.topCardPlay} onPress={() => handleTrackPress(topTrack)}>
-                  <Ionicons name="play" size={22} color="#000" />
-                </TouchableOpacity>
-              </TouchableOpacity>
+              {(() => {
+                const downloaded = isDownloaded(topTrack.id);
+                const downloading = isDownloading(topTrack.id);
+                const progress = getProgress(topTrack.id);
+                return (
+                  <TouchableOpacity
+                    style={styles.topCard}
+                    onPress={() => handleTrackPress(topTrack)}
+                    activeOpacity={0.85}
+                  >
+                    <Image source={{ uri: topTrack.images }} style={styles.topCardArt} contentFit="cover" />
+                    <Text style={styles.topCardName} numberOfLines={2}>{topTrack.name}</Text>
+                    <Text style={styles.topCardArtist} numberOfLines={1}>{topTrack.artists}</Text>
+
+                    {/* Action row */}
+                    <View style={styles.topCardActions}>
+                      <TouchableOpacity
+                        style={styles.topCardActionBtn}
+                        onPress={(e) => { e.stopPropagation(); if (!downloaded && !downloading) handleDownload(topTrack); }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        {downloading ? (
+                          progress > 0 && progress < 1
+                            ? <Text style={styles.topCardProgress}>{Math.round(progress * 100)}%</Text>
+                            : <ActivityIndicator size="small" color="#1DB954" />
+                        ) : downloaded ? (
+                          <Ionicons name="arrow-down-circle" size={24} color="#1DB954" />
+                        ) : (
+                          <Ionicons name="arrow-down-circle-outline" size={24} color="#9B9B9B" />
+                        )}
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.topCardActionBtn}
+                        onPress={(e) => { e.stopPropagation(); setAddTrack(topTrack); }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="add-circle-outline" size={24} color="#9B9B9B" />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.topCardActionBtn}
+                        onPress={(e) => { e.stopPropagation(); setOptionsTrack(topTrack); }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="ellipsis-horizontal" size={20} color="#9B9B9B" />
+                      </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity style={styles.topCardPlay} onPress={(e) => { e.stopPropagation(); handleTrackPress(topTrack); }}>
+                      <Ionicons name="play" size={22} color="#000" />
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                );
+              })()}
 
               {/* Artists section */}
               {artists.length > 0 && (
@@ -515,12 +558,30 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 4,
-    paddingRight: 64,
+    paddingRight: 60,
   },
   topCardArtist: {
     color: '#9B9B9B',
     fontSize: 14,
+    paddingRight: 60,
+  },
+  topCardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 14,
     paddingRight: 64,
+  },
+  topCardActionBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topCardProgress: {
+    color: '#1DB954',
+    fontSize: 10,
+    fontWeight: '700',
   },
   topCardPlay: {
     position: 'absolute',

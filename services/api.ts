@@ -189,6 +189,60 @@ export async function serverDownloadTrack(track: {
   }
 }
 
+// ── Albums ────────────────────────────────────────────────────────────────────
+
+export interface SpotifyAlbum {
+  id: string;
+  name: string;
+  artists: string;
+  images: string;
+  release_date?: string;
+  total_tracks?: number;
+}
+
+export interface AlbumData {
+  cover: string;
+  name: string;
+  artists: string;
+  release_date?: string;
+  total_tracks: number;
+  tracks: SpotifyTrack[];
+}
+
+export async function searchAlbums(q: string, limit = 8): Promise<SpotifyAlbum[]> {
+  const res = await fetch(
+    `${SPOTFLAC}/search?q=${encodeURIComponent(q)}&limit=${limit}&type=album`
+  );
+  const json = await res.json();
+  return (json.albums ?? json.results ?? []) as SpotifyAlbum[];
+}
+
+export async function getAlbum(albumId: string): Promise<AlbumData> {
+  const url = `https://open.spotify.com/album/${albumId}`;
+  const res = await fetch(`${SPOTFLAC}/metadata?url=${encodeURIComponent(url)}`);
+  const json = await res.json();
+
+  const info = json.album_info ?? json.playlist_info ?? {};
+  const tracks = ((json.track_list ?? []) as any[]).map((t) => ({
+    id: t.spotify_id ?? t.id ?? '',
+    name: t.name ?? '',
+    artists: t.artists ?? info.artists ?? '',
+    album_name: info.name ?? t.album_name ?? '',
+    images: t.images ?? info.cover ?? '',
+    duration_ms: t.duration_ms ?? 0,
+    external_urls: t.external_urls ?? '',
+  }));
+
+  return {
+    cover: info.cover ?? '',
+    name: info.name ?? '',
+    artists: info.artists ?? '',
+    release_date: info.release_date ?? '',
+    total_tracks: info.total_tracks ?? tracks.length,
+    tracks,
+  };
+}
+
 // ── Recommendations ───────────────────────────────────────────────────────────
 
 export async function getRecommendations(trackId: string, limit = 20): Promise<SpotifyTrack[]> {

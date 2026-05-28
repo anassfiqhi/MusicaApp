@@ -14,7 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { searchTracks, prefetchTrack, getStreamUrl, type SpotifyTrack } from '@/services/api';
+import { searchTracks, searchAlbums, prefetchTrack, getStreamUrl, type SpotifyTrack, type SpotifyAlbum } from '@/services/api';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { useDownloads } from '@/context/DownloadsContext';
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
@@ -39,6 +39,7 @@ export default function ExploreScreen() {
 
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SpotifyTrack[]>([]);
+  const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [optionsTrack, setOptionsTrack] = useState<SpotifyTrack | null>(null);
@@ -49,8 +50,12 @@ export default function ExploreScreen() {
     setLoading(true);
     setSearched(true);
     try {
-      const tracks = await searchTracks(q.trim());
+      const [tracks, albumList] = await Promise.all([
+        searchTracks(q.trim()),
+        searchAlbums(q.trim()),
+      ]);
       setResults(tracks);
+      setAlbums(albumList);
     } finally {
       setLoading(false);
     }
@@ -66,6 +71,7 @@ export default function ExploreScreen() {
   const handleClear = () => {
     setQuery('');
     setResults([]);
+    setAlbums([]);
     setSearched(false);
   };
 
@@ -189,7 +195,7 @@ export default function ExploreScreen() {
       )}
 
       {/* ── No results ── */}
-      {searched && !loading && results.length === 0 && (
+      {searched && !loading && results.length === 0 && albums.length === 0 && (
         <View style={styles.centered}>
           <Text style={styles.noResultsTitle}>No results found</Text>
           <Text style={styles.noResultsSub}>
@@ -222,8 +228,37 @@ export default function ExploreScreen() {
                 </TouchableOpacity>
               </TouchableOpacity>
 
+              {/* Albums section */}
+              {albums.length > 0 && (
+                <>
+                  <Text style={styles.sectionLabel}>Albums</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.albumsScroll}
+                  >
+                    {albums.map((album) => (
+                      <TouchableOpacity
+                        key={album.id}
+                        style={styles.albumCard}
+                        onPress={() => router.push(`/album/${album.id}`)}
+                        activeOpacity={0.75}
+                      >
+                        <Image
+                          source={{ uri: album.images }}
+                          style={styles.albumArt}
+                          contentFit="cover"
+                        />
+                        <Text style={styles.albumName} numberOfLines={2}>{album.name}</Text>
+                        <Text style={styles.albumArtist} numberOfLines={1}>{album.artists}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
+
               {songResults.length > 0 && (
-                <Text style={[styles.sectionLabel, { marginTop: 0 }]}>Songs</Text>
+                <Text style={[styles.sectionLabel, { marginTop: albums.length > 0 ? 4 : 0 }]}>Songs</Text>
               )}
             </>
           }
@@ -380,4 +415,16 @@ const styles = StyleSheet.create({
   actionBtn: { padding: 4, alignItems: 'center', justifyContent: 'center', minWidth: 32 },
   progressRing: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   progressText: { color: '#1DB954', fontSize: 9, fontWeight: '700' },
+
+  albumsScroll: { paddingHorizontal: 16, paddingBottom: 4, gap: 14 },
+  albumCard: { width: 132 },
+  albumArt: {
+    width: 132,
+    height: 132,
+    borderRadius: 6,
+    backgroundColor: '#282828',
+    marginBottom: 8,
+  },
+  albumName: { color: '#fff', fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  albumArtist: { color: '#9B9B9B', fontSize: 12, marginTop: 2 },
 });

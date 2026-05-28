@@ -22,7 +22,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="index"
+        name="library"
         options={{
           title: 'Library',
           tabBarIcon: ({ color, size }) => <Ionicons name="library" size={size} color={color} />,

@@ -1,27 +1,26 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  useWindowDimensions,
-  Alert,
-} from 'react-native';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
+import AddToPlaylistModal from '@/components/AddToPlaylistModal';
+import CreatePlaylistModal from '@/components/CreatePlaylistModal';
+import TrackOptionsSheet from '@/components/TrackOptionsSheet';
 import { useDownloads } from '@/context/DownloadsContext';
 import { usePlaylists } from '@/context/PlaylistsContext';
-import { formatBytes } from '@/services/downloads';
-import type { DownloadedTrack } from '@/services/downloads';
+import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import type { SpotifyTrack } from '@/services/api';
-import AddToPlaylistModal from '@/components/AddToPlaylistModal';
-import TrackOptionsSheet from '@/components/TrackOptionsSheet';
-import CreatePlaylistModal from '@/components/CreatePlaylistModal';
+import type { DownloadedTrack } from '@/services/downloads';
+import { formatBytes } from '@/services/downloads';
+import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Segment = 'playlists' | 'downloads';
 
@@ -112,7 +111,7 @@ export default function LibraryScreen() {
                   <Ionicons name="musical-notes" size={52} color="#1DB954" />
                 </View>
                 <Text style={styles.emptyPlaylistsTitle}>Create your first playlist</Text>
-                <Text style={styles.emptyPlaylistsSub}>It's easy, we'll help you</Text>
+                <Text style={styles.emptyPlaylistsSub}>It&apos;s easy, we&apos;ll help you</Text>
                 <TouchableOpacity style={styles.createBtn} onPress={() => setCreatingPlaylist(true)}>
                   <Text style={styles.createBtnText}>Create playlist</Text>
                 </TouchableOpacity>

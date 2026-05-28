@@ -217,6 +217,9 @@ export default function LibraryScreen() {
                     onPress={() => handlePlay(d)}
                     activeOpacity={0.7}
                   >
+                    <View style={styles.trackIndicator}>
+                      {isActive && <Ionicons name="musical-note" size={14} color="#1DB954" />}
+                    </View>
                     <Image
                       source={getArtwork(d)}
                       style={[styles.trackArtwork, isWide && styles.trackArtworkWide]}
@@ -441,6 +444,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   trackRowActive: { backgroundColor: 'rgba(29,185,84,0.08)' },
+  trackIndicator: { width: 16, alignItems: 'center', justifyContent: 'center' },
   trackArtwork: { width: 50, height: 50, borderRadius: 4, backgroundColor: '#282828' },
   trackArtworkWide: { width: 44, height: 44 },
   trackInfo: { flex: 1, gap: 3 },

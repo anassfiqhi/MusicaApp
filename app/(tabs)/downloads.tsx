@@ -95,6 +95,9 @@ export default function DownloadsScreen() {
                   onPress={() => handlePlay(d)}
                   activeOpacity={0.7}
                 >
+                  <View style={styles.indicator}>
+                    {isActive && <Ionicons name="musical-note" size={14} color="#1DB954" />}
+                  </View>
                   <Image
                     source={getArtwork(d)}
                     style={[styles.artwork, isWide && styles.artworkWide]}
@@ -184,6 +187,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   rowActive: { backgroundColor: 'rgba(255,255,255,0.06)' },
+  indicator: { width: 16, alignItems: 'center', justifyContent: 'center' },
   artwork: { width: 52, height: 52, borderRadius: 4, backgroundColor: '#282828' },
   artworkWide: { width: 44, height: 44 },
   info: { flex: 1, gap: 2 },

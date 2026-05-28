@@ -266,9 +266,10 @@ export default function ArtistScreen() {
                   onPressIn={() => prefetchTrack(track.id)}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.trackNum, isActive && styles.trackNumActive]}>
-                    {isActive ? '▶' : index + 1}
-                  </Text>
+                  {isActive
+                    ? <Ionicons name="musical-note" size={14} color="#1DB954" />
+                    : <Text style={styles.trackNum}>{index + 1}</Text>
+                  }
                   <Image
                     source={{ uri: track.images }}
                     style={styles.trackArt}
@@ -452,7 +453,6 @@ const styles = StyleSheet.create({
   },
   trackRowActive: { backgroundColor: 'rgba(29,185,84,0.08)' },
   trackNum: { width: 20, color: '#9B9B9B', fontSize: 14, textAlign: 'center' },
-  trackNumActive: { color: '#1DB954', fontSize: 11 },
   trackArt: { width: 46, height: 46, borderRadius: 4, backgroundColor: '#282828' },
   trackInfo: { flex: 1, gap: 3 },
   trackName: { color: '#fff', fontSize: 15, fontWeight: '500' },

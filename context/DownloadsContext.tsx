@@ -5,6 +5,7 @@ import {
   removeDownload,
   type DownloadedTrack,
 } from '../services/downloads';
+import { useToast } from './ToastContext';
 
 interface ActiveEntry {
   progress: number; // 0–1, or -1 for indeterminate
@@ -27,6 +28,7 @@ export function DownloadsProvider({ children }: { children: React.ReactNode }) {
   const [downloads, setDownloads] = useState<DownloadedTrack[]>([]);
   const [activeDownloads, setActiveDownloads] = useState<Record<string, ActiveEntry>>({});
   const inFlight = useRef<Set<string>>(new Set());
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadDownloads().then(setDownloads);
@@ -37,6 +39,7 @@ export function DownloadsProvider({ children }: { children: React.ReactNode }) {
       if (inFlight.current.has(track.id)) return;
       inFlight.current.add(track.id);
       setActiveDownloads((p) => ({ ...p, [track.id]: { progress: 0, error: false } }));
+      showToast(`Downloading "${track.title}"`, { icon: 'arrow-down-circle-outline', iconColor: '#9B9B9B', duration: 2000 });
 
       startDownload(track, (progress) => {
         setActiveDownloads((p) => ({ ...p, [track.id]: { progress, error: false } }));
@@ -44,10 +47,12 @@ export function DownloadsProvider({ children }: { children: React.ReactNode }) {
         .then((entry) => {
           setDownloads((p) => [entry, ...p.filter((d) => d.id !== track.id)]);
           setActiveDownloads((p) => { const n = { ...p }; delete n[track.id]; return n; });
+          showToast(`"${track.title}" downloaded`);
         })
         .catch((err) => {
           console.log(`[download] error — "${track.title}":`, err?.message ?? err);
           setActiveDownloads((p) => ({ ...p, [track.id]: { progress: 0, error: true } }));
+          showToast(`Download failed — "${track.title}"`, { icon: 'alert-circle', iconColor: '#E8115B', duration: 3500 });
           setTimeout(() => {
             setActiveDownloads((p) => { const n = { ...p }; delete n[track.id]; return n; });
           }, 3000);
@@ -56,7 +61,7 @@ export function DownloadsProvider({ children }: { children: React.ReactNode }) {
           inFlight.current.delete(track.id);
         });
     },
-    []
+    [showToast]
   );
 
   const remove = useCallback(async (trackId: string) => {

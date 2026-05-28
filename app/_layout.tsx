@@ -32,10 +32,10 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
+      <ToastProvider>
       <DownloadsProvider>
       <PlaylistsProvider>
       <TrackPlayerProvider>
-      <ToastProvider>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
@@ -61,10 +61,10 @@ export default function RootLayout() {
           />
         </Stack>
         <FloatingMiniPlayer />
-      </ToastProvider>
       </TrackPlayerProvider>
       </PlaylistsProvider>
       </DownloadsProvider>
+      </ToastProvider>
     </SafeAreaProvider>
     </GestureHandlerRootView>
   );

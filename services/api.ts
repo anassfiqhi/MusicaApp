@@ -210,19 +210,29 @@ export interface ArtistData {
 }
 
 export async function searchArtists(q: string, limit = 6): Promise<SpotifyArtist[]> {
+  console.log(`[searchArtists] q="${q}" limit=${limit}`);
   const res = await fetch(
     `${SPOTFLAC}/search?q=${encodeURIComponent(q)}&limit=${limit}&type=artist`
   );
+  console.log(`[searchArtists] HTTP ${res.status}`);
   const json = await res.json();
-  return (json.artists ?? json.results ?? []) as SpotifyArtist[];
+  console.log(`[searchArtists] raw keys:`, Object.keys(json), '| raw json:', JSON.stringify(json).slice(0, 400));
+  const results = (json.artists ?? json.results ?? []) as SpotifyArtist[];
+  console.log(`[searchArtists] returning ${results.length} artists`);
+  return results;
 }
 
 export async function getArtist(artistId: string): Promise<ArtistData> {
   const url = `https://open.spotify.com/artist/${artistId}`;
+  console.log(`[getArtist] fetching id=${artistId}`);
   const res = await fetch(`${SPOTFLAC}/metadata?url=${encodeURIComponent(url)}`);
+  console.log(`[getArtist] HTTP ${res.status}`);
   const json = await res.json();
+  console.log(`[getArtist] raw keys:`, Object.keys(json));
+  console.log(`[getArtist] raw json:`, JSON.stringify(json).slice(0, 600));
 
   const info = json.artist_info ?? json.playlist_info ?? {};
+  console.log(`[getArtist] info keys:`, Object.keys(info));
   const topTracks = ((json.top_tracks ?? json.track_list ?? []) as any[]).map((t) => ({
     id: t.spotify_id ?? t.id ?? '',
     name: t.name ?? '',
@@ -242,7 +252,7 @@ export async function getArtist(artistId: string): Promise<ArtistData> {
     total_tracks: a.total_tracks ?? 0,
   }));
 
-  return {
+  const result: ArtistData = {
     name: info.name ?? '',
     images: info.images ?? info.cover ?? '',
     followers: info.followers?.total ?? info.followers ?? undefined,
@@ -251,6 +261,8 @@ export async function getArtist(artistId: string): Promise<ArtistData> {
     top_tracks: topTracks,
     albums,
   };
+  console.log(`[getArtist] parsed: name="${result.name}" top_tracks=${result.top_tracks.length} albums=${result.albums.length} followers=${result.followers} monthly_listeners=${result.monthly_listeners}`);
+  return result;
 }
 
 // ── Albums ────────────────────────────────────────────────────────────────────
@@ -274,19 +286,29 @@ export interface AlbumData {
 }
 
 export async function searchAlbums(q: string, limit = 8): Promise<SpotifyAlbum[]> {
+  console.log(`[searchAlbums] q="${q}" limit=${limit}`);
   const res = await fetch(
     `${SPOTFLAC}/search?q=${encodeURIComponent(q)}&limit=${limit}&type=album`
   );
+  console.log(`[searchAlbums] HTTP ${res.status}`);
   const json = await res.json();
-  return (json.albums ?? json.results ?? []) as SpotifyAlbum[];
+  console.log(`[searchAlbums] raw keys:`, Object.keys(json), '| raw json:', JSON.stringify(json).slice(0, 400));
+  const results = (json.albums ?? json.results ?? []) as SpotifyAlbum[];
+  console.log(`[searchAlbums] returning ${results.length} albums`);
+  return results;
 }
 
 export async function getAlbum(albumId: string): Promise<AlbumData> {
   const url = `https://open.spotify.com/album/${albumId}`;
+  console.log(`[getAlbum] fetching id=${albumId}`);
   const res = await fetch(`${SPOTFLAC}/metadata?url=${encodeURIComponent(url)}`);
+  console.log(`[getAlbum] HTTP ${res.status}`);
   const json = await res.json();
+  console.log(`[getAlbum] raw keys:`, Object.keys(json));
+  console.log(`[getAlbum] raw json:`, JSON.stringify(json).slice(0, 600));
 
   const info = json.album_info ?? json.playlist_info ?? {};
+  console.log(`[getAlbum] info keys:`, Object.keys(info));
   const tracks = ((json.track_list ?? []) as any[]).map((t) => ({
     id: t.spotify_id ?? t.id ?? '',
     name: t.name ?? '',
@@ -297,7 +319,7 @@ export async function getAlbum(albumId: string): Promise<AlbumData> {
     external_urls: t.external_urls ?? '',
   }));
 
-  return {
+  const result: AlbumData = {
     cover: info.cover ?? '',
     name: info.name ?? '',
     artists: info.artists ?? '',
@@ -305,6 +327,8 @@ export async function getAlbum(albumId: string): Promise<AlbumData> {
     total_tracks: info.total_tracks ?? tracks.length,
     tracks,
   };
+  console.log(`[getAlbum] parsed: name="${result.name}" artists="${result.artists}" tracks=${result.tracks.length} year=${result.release_date?.slice(0,4)}`);
+  return result;
 }
 
 // ── Recommendations ───────────────────────────────────────────────────────────

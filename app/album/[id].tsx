@@ -42,16 +42,24 @@ export default function AlbumScreen() {
 
   useEffect(() => {
     if (!id) return;
+    console.log(`[album] loading id=${id}`);
     setLoading(true);
     setError(false);
     getAlbum(id)
-      .then(setAlbum)
-      .catch(() => setError(true))
+      .then((data) => {
+        console.log(`[album] loaded: name="${data.name}" artists="${data.artists}" tracks=${data.tracks.length} year=${data.release_date?.slice(0,4)}`);
+        setAlbum(data);
+      })
+      .catch((err) => {
+        console.error(`[album] load error id=${id}:`, err);
+        setError(true);
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
   const handlePlay = useCallback((index: number) => {
     if (!album || album.tracks.length === 0) return;
+    console.log(`[album] play from index=${index} in "${album.name}"`);
     playSpotifyPlaylist(album.tracks, index);
     router.push('/player');
   }, [album, playSpotifyPlaylist]);
@@ -60,12 +68,14 @@ export default function AlbumScreen() {
 
   const handleShuffle = useCallback(() => {
     if (!album || album.tracks.length === 0) return;
+    console.log(`[album] shuffle ${album.tracks.length} tracks in "${album.name}"`);
     const shuffled = [...album.tracks].sort(() => Math.random() - 0.5);
     playSpotifyPlaylist(shuffled, 0);
     router.push('/player');
   }, [album, playSpotifyPlaylist]);
 
   const handleDownload = useCallback((track: SpotifyTrack) => {
+    console.log(`[album] download track id=${track.id} name="${track.name}"`);
     download({
       id: track.id,
       title: track.name,

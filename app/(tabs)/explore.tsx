@@ -48,6 +48,7 @@ export default function ExploreScreen() {
 
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) return;
+    console.log(`[explore] search start: "${q}"`);
     setLoading(true);
     setSearched(true);
     try {
@@ -56,9 +57,12 @@ export default function ExploreScreen() {
         searchAlbums(q.trim()),
         searchArtists(q.trim()),
       ]);
+      console.log(`[explore] search done: ${tracks.length} tracks, ${albumList.length} albums, ${artistList.length} artists`);
       setResults(tracks);
       setAlbums(albumList);
       setArtists(artistList);
+    } catch (err) {
+      console.error(`[explore] search error:`, err);
     } finally {
       setLoading(false);
     }

@@ -32,10 +32,6 @@ function getGreeting() {
   return 'Good evening';
 }
 
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
 const PLACEHOLDER = require('@/assets/images/playlist/album_art.png');
 
 function getArtwork(d: DownloadedTrack) {
@@ -71,11 +67,10 @@ export default function LibraryScreen() {
     router.push('/player');
   };
 
-  const handleDelete = (d: DownloadedTrack) => {
-    Alert.alert('Remove download', `Remove "${d.title}" from downloads?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => remove(d.id) },
-    ]);
+  const handleShuffle = () => {
+    const shuffled = [...downloads].sort(() => Math.random() - 0.5);
+    playLocalPlaylist(shuffled, 0);
+    router.push('/player');
   };
 
   const handleCreatePlaylist = async (name: string) => {
@@ -84,7 +79,6 @@ export default function LibraryScreen() {
     router.push(`/my-playlist/${playlist.id}`);
   };
 
-  const gridTracks = downloads.slice(0, 6);
   const totalSize = downloads.reduce((sum, d) => sum + d.fileSizeBytes, 0);
 
   return (
@@ -188,32 +182,29 @@ export default function LibraryScreen() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
             >
-              {/* Quick-access grid */}
-              <View style={[styles.grid, isWide && styles.gridWide]}>
-                {gridTracks.map(d => (
-                  <TouchableOpacity
-                    key={d.id}
-                    style={[styles.gridItem, isWide && styles.gridItemWide, currentTrack?.id === d.id && styles.gridItemActive]}
-                    onPress={() => handlePlay(d)}
-                  >
-                    <Image source={getArtwork(d)} style={styles.gridArtwork} contentFit="cover" recyclingKey={d.id} />
-                    <Text style={styles.gridTitle} numberOfLines={1}>{d.title}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Storage bar + Play all */}
+              {/* Toolbar */}
               <View style={styles.downloadsToolbar}>
-                <Text style={styles.storageText}>
-                  {downloads.length} track{downloads.length !== 1 ? 's' : ''} · {formatBytes(totalSize)}
-                </Text>
-                <TouchableOpacity
-                  style={styles.playAllBtn}
-                  onPress={() => { playLocalPlaylist(downloads, 0); router.push('/player'); }}
-                >
-                  <Ionicons name="play" size={16} color="black" />
-                  <Text style={styles.playAllText}>Play all</Text>
-                </TouchableOpacity>
+                <View>
+                  <Text style={styles.downloadsCount}>
+                    {downloads.length} {downloads.length === 1 ? 'song' : 'songs'}
+                  </Text>
+                  <Text style={styles.storageText}>{formatBytes(totalSize)} on device</Text>
+                </View>
+                <View style={styles.toolbarActions}>
+                  <TouchableOpacity
+                    style={styles.shuffleBtn}
+                    onPress={handleShuffle}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="shuffle" size={24} color="#9B9B9B" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.playCircleBtn}
+                    onPress={() => { playLocalPlaylist(downloads, 0); router.push('/player'); }}
+                  >
+                    <Ionicons name="play" size={isWide ? 22 : 26} color="#000" />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Track list */}
@@ -239,26 +230,16 @@ export default function LibraryScreen() {
                       >
                         {d.title}
                       </Text>
-                      <Text style={[styles.trackArtist, isWide && styles.trackArtistWide]} numberOfLines={1}>
+                      <Text style={[styles.trackArtist, isWide && styles.trackArtistWide, isActive && styles.trackArtistActive]} numberOfLines={1}>
                         {d.artist}
-                      </Text>
-                      <Text style={styles.trackMeta}>
-                        {formatBytes(d.fileSizeBytes)} · {formatDate(d.downloadedAt)}
                       </Text>
                     </View>
                     <TouchableOpacity
-                      onPress={() => setOptionsTrack(toSpotifyTrack(d))}
+                      onPress={(e) => { e.stopPropagation(); setOptionsTrack(toSpotifyTrack(d)); }}
                       style={styles.actionBtn}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       <Ionicons name="ellipsis-vertical" size={isWide ? 18 : 20} color="#9B9B9B" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDelete(d)}
-                      style={styles.actionBtn}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Ionicons name="trash-outline" size={isWide ? 18 : 20} color="#535353" />
                     </TouchableOpacity>
                   </TouchableOpacity>
                 );
@@ -426,57 +407,48 @@ const styles = StyleSheet.create({
   },
   discoverBtnText: { color: '#000', fontWeight: '700', fontSize: 14 },
 
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
-  gridWide: { gap: 10 },
-  gridItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 6,
-    overflow: 'hidden',
-    width: '48.5%',
-    height: 56,
-  },
-  gridItemWide: { height: 48 },
-  gridItemActive: { backgroundColor: 'rgba(29,185,84,0.25)' },
-  gridArtwork: { width: 56, height: 56 },
-  gridTitle: { color: 'white', fontSize: 13, fontWeight: '600', flex: 1, paddingHorizontal: 10 },
-
   downloadsToolbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
+    marginTop: 4,
   },
-  storageText: { color: '#9B9B9B', fontSize: 13 },
-  playAllBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  downloadsCount: { color: 'white', fontSize: 15, fontWeight: '600' },
+  storageText: { color: '#9B9B9B', fontSize: 12, marginTop: 2 },
+  toolbarActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  shuffleBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  playCircleBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#1DB954',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1DB954',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  playAllText: { color: '#000', fontWeight: '700', fontSize: 13 },
 
   trackRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 4,
     borderRadius: 8,
     gap: 12,
   },
-  trackRowActive: { backgroundColor: 'rgba(255,255,255,0.06)' },
-  trackArtwork: { width: 52, height: 52, borderRadius: 4, backgroundColor: '#282828' },
+  trackRowActive: { backgroundColor: 'rgba(29,185,84,0.08)' },
+  trackArtwork: { width: 50, height: 50, borderRadius: 4, backgroundColor: '#282828' },
   trackArtworkWide: { width: 44, height: 44 },
-  trackInfo: { flex: 1, gap: 2 },
-  trackTitle: { color: 'white', fontSize: 15, fontWeight: '600' },
+  trackInfo: { flex: 1, gap: 3 },
+  trackTitle: { color: 'white', fontSize: 15, fontWeight: '500' },
   trackTitleWide: { fontSize: 13 },
   trackTitleActive: { color: '#1DB954' },
   trackArtist: { color: '#9B9B9B', fontSize: 13 },
   trackArtistWide: { fontSize: 11 },
-  trackMeta: { color: '#535353', fontSize: 11 },
+  trackArtistActive: { color: '#1DB954' },
   actionBtn: { padding: 8 },
 });

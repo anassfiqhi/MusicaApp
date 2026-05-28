@@ -189,6 +189,70 @@ export async function serverDownloadTrack(track: {
   }
 }
 
+// ── Artists ───────────────────────────────────────────────────────────────────
+
+export interface SpotifyArtist {
+  id: string;
+  name: string;
+  images: string;
+  followers?: number;
+  genres?: string[];
+}
+
+export interface ArtistData {
+  name: string;
+  images: string;
+  followers?: number;
+  monthly_listeners?: number;
+  genres?: string[];
+  top_tracks: SpotifyTrack[];
+  albums: SpotifyAlbum[];
+}
+
+export async function searchArtists(q: string, limit = 6): Promise<SpotifyArtist[]> {
+  const res = await fetch(
+    `${SPOTFLAC}/search?q=${encodeURIComponent(q)}&limit=${limit}&type=artist`
+  );
+  const json = await res.json();
+  return (json.artists ?? json.results ?? []) as SpotifyArtist[];
+}
+
+export async function getArtist(artistId: string): Promise<ArtistData> {
+  const url = `https://open.spotify.com/artist/${artistId}`;
+  const res = await fetch(`${SPOTFLAC}/metadata?url=${encodeURIComponent(url)}`);
+  const json = await res.json();
+
+  const info = json.artist_info ?? json.playlist_info ?? {};
+  const topTracks = ((json.top_tracks ?? json.track_list ?? []) as any[]).map((t) => ({
+    id: t.spotify_id ?? t.id ?? '',
+    name: t.name ?? '',
+    artists: t.artists ?? info.name ?? '',
+    album_name: t.album_name ?? '',
+    images: t.images ?? info.images ?? '',
+    duration_ms: t.duration_ms ?? 0,
+    external_urls: t.external_urls ?? '',
+  }));
+
+  const albums = ((json.albums ?? []) as any[]).map((a) => ({
+    id: a.id ?? '',
+    name: a.name ?? '',
+    artists: a.artists ?? info.name ?? '',
+    images: a.images ?? '',
+    release_date: a.release_date ?? '',
+    total_tracks: a.total_tracks ?? 0,
+  }));
+
+  return {
+    name: info.name ?? '',
+    images: info.images ?? info.cover ?? '',
+    followers: info.followers?.total ?? info.followers ?? undefined,
+    monthly_listeners: info.monthly_listeners ?? undefined,
+    genres: info.genres ?? [],
+    top_tracks: topTracks,
+    albums,
+  };
+}
+
 // ── Albums ────────────────────────────────────────────────────────────────────
 
 export interface SpotifyAlbum {

@@ -14,7 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { searchTracks, searchAlbums, prefetchTrack, getStreamUrl, type SpotifyTrack, type SpotifyAlbum } from '@/services/api';
+import { searchTracks, searchAlbums, searchArtists, prefetchTrack, getStreamUrl, type SpotifyTrack, type SpotifyAlbum, type SpotifyArtist } from '@/services/api';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import { useDownloads } from '@/context/DownloadsContext';
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
@@ -40,6 +40,7 @@ export default function ExploreScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SpotifyTrack[]>([]);
   const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
+  const [artists, setArtists] = useState<SpotifyArtist[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [optionsTrack, setOptionsTrack] = useState<SpotifyTrack | null>(null);
@@ -50,12 +51,14 @@ export default function ExploreScreen() {
     setLoading(true);
     setSearched(true);
     try {
-      const [tracks, albumList] = await Promise.all([
+      const [tracks, albumList, artistList] = await Promise.all([
         searchTracks(q.trim()),
         searchAlbums(q.trim()),
+        searchArtists(q.trim()),
       ]);
       setResults(tracks);
       setAlbums(albumList);
+      setArtists(artistList);
     } finally {
       setLoading(false);
     }
@@ -72,6 +75,7 @@ export default function ExploreScreen() {
     setQuery('');
     setResults([]);
     setAlbums([]);
+    setArtists([]);
     setSearched(false);
   };
 
@@ -195,7 +199,7 @@ export default function ExploreScreen() {
       )}
 
       {/* ── No results ── */}
-      {searched && !loading && results.length === 0 && albums.length === 0 && (
+      {searched && !loading && results.length === 0 && albums.length === 0 && artists.length === 0 && (
         <View style={styles.centered}>
           <Text style={styles.noResultsTitle}>No results found</Text>
           <Text style={styles.noResultsSub}>
@@ -227,6 +231,35 @@ export default function ExploreScreen() {
                   <Ionicons name="play" size={22} color="#000" />
                 </TouchableOpacity>
               </TouchableOpacity>
+
+              {/* Artists section */}
+              {artists.length > 0 && (
+                <>
+                  <Text style={styles.sectionLabel}>Artists</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.artistsScroll}
+                  >
+                    {artists.map((artist) => (
+                      <TouchableOpacity
+                        key={artist.id}
+                        style={styles.artistCard}
+                        onPress={() => router.push(`/artist/${artist.id}`)}
+                        activeOpacity={0.75}
+                      >
+                        <Image
+                          source={{ uri: artist.images }}
+                          style={styles.artistAvatar}
+                          contentFit="cover"
+                        />
+                        <Text style={styles.artistName} numberOfLines={1}>{artist.name}</Text>
+                        <Text style={styles.artistLabel}>Artist</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
 
               {/* Albums section */}
               {albums.length > 0 && (
@@ -415,6 +448,18 @@ const styles = StyleSheet.create({
   actionBtn: { padding: 4, alignItems: 'center', justifyContent: 'center', minWidth: 32 },
   progressRing: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   progressText: { color: '#1DB954', fontSize: 9, fontWeight: '700' },
+
+  artistsScroll: { paddingHorizontal: 16, paddingBottom: 8, gap: 16 },
+  artistCard: { width: 96, alignItems: 'center' },
+  artistAvatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#282828',
+    marginBottom: 8,
+  },
+  artistName: { color: '#fff', fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  artistLabel: { color: '#9B9B9B', fontSize: 11, marginTop: 2, textAlign: 'center' },
 
   albumsScroll: { paddingHorizontal: 16, paddingBottom: 4, gap: 14 },
   albumCard: { width: 132 },

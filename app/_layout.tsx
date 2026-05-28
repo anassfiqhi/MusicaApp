@@ -53,6 +53,10 @@ export default function RootLayout() {
             name="album/[id]"
             options={{ animation: 'slide_from_right' }}
           />
+          <Stack.Screen
+            name="artist/[id]"
+            options={{ animation: 'slide_from_right' }}
+          />
         </Stack>
         <FloatingMiniPlayer />
       </TrackPlayerProvider>

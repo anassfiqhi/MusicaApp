@@ -25,13 +25,6 @@ import CreatePlaylistModal from '@/components/CreatePlaylistModal';
 
 type Segment = 'playlists' | 'downloads';
 
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
-}
-
 const PLACEHOLDER = require('@/assets/images/playlist/album_art.png');
 
 function getArtwork(d: DownloadedTrack) {
@@ -87,10 +80,7 @@ export default function LibraryScreen() {
 
         {/* Header */}
         <View style={styles.topBar}>
-          <Text style={[styles.greeting, isWide && styles.greetingWide]}>{getGreeting()}</Text>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={isWide ? 16 : 18} color="white" />
-          </View>
+          <Text style={[styles.heading, isWide && styles.headingWide]}>Your Library</Text>
         </View>
 
         {/* Segment pills */}
@@ -290,16 +280,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 20,
   },
-  greeting: { color: 'white', fontSize: 22, fontWeight: 'bold' },
-  greetingWide: { fontSize: 18 },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  heading: { color: 'white', fontSize: 22, fontWeight: '800' },
+  headingWide: { fontSize: 18 },
 
   segments: {
     flexDirection: 'row',

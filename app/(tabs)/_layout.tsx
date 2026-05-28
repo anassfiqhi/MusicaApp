@@ -6,6 +6,7 @@ import { HapticTab } from '@/components/haptic-tab';
 export default function TabLayout() {
   return (
     <Tabs
+      initialRouteName="discover"
       screenOptions={{
         tabBarActiveTintColor: '#1DB954',
         tabBarInactiveTintColor: '#9B9B9B',
@@ -14,17 +15,17 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
       }}>
       <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Library',
-          tabBarIcon: ({ color, size }) => <Ionicons name="library" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="discover"
         options={{
           title: 'Discover',
           tabBarIcon: ({ color, size }) => <Ionicons name="compass" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Library',
+          tabBarIcon: ({ color, size }) => <Ionicons name="library" size={size} color={color} />,
         }}
       />
       <Tabs.Screen

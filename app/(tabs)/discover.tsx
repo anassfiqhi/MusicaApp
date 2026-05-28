@@ -24,6 +24,7 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
+
 function openPlaylist(playlist: PlaylistRef) {
   router.push({ pathname: '/playlist/[id]', params: { id: playlist.id, title: playlist.title } });
 }
@@ -195,6 +196,9 @@ export default function DiscoverScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.greeting}>{greeting}</Text>
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={18} color="#fff" />
+          </View>
         </View>
 
         {loading ? (
@@ -263,15 +267,26 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: 120 },
 
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 20,
   },
   greeting: {
+    flex: 1,
     color: '#fff',
     fontSize: 26,
     fontWeight: '800',
     letterSpacing: -0.3,
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#535353',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   centered: { paddingTop: 80, alignItems: 'center' },

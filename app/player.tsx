@@ -117,7 +117,7 @@ export default function PlayerScreen() {
             <TrackDetails
               title={currentTrack.title}
               artist={currentTrack.artist}
-              onDownload={spotifyMode ? handleDownload : undefined}
+              onDownload={spotifyMode || downloaded ? handleDownload : undefined}
               downloaded={downloaded}
               downloading={downloading}
               dlProgress={dlProgress}

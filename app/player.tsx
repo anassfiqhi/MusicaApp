@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Modal,
+  Share,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,8 +22,9 @@ import PlayerControls from '../components/PlayerControls';
 import LyricsView from '../components/LyricsView';
 import { useTrackPlayerContext } from '../context/TrackPlayerContext';
 import { useDownloads } from '../context/DownloadsContext';
-import { getRecommendations, getStreamUrl, prefetchTrack, type SpotifyTrack } from '../services/api';
+import { getRecommendations, getStreamUrl, searchArtists, searchAlbums, prefetchTrack, type SpotifyTrack } from '../services/api';
 import AddToPlaylistModal from '../components/AddToPlaylistModal';
+import { Ionicons } from '@expo/vector-icons';
 
 function formatDuration(ms: number): string {
   const m = Math.floor(ms / 60000);
@@ -56,6 +58,7 @@ export default function PlayerScreen() {
 
   const { download, isDownloaded, isDownloading, getProgress } = useDownloads();
   const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [recommendations, setRecommendations] = useState<SpotifyTrack[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const lastFetchedId = useRef<string>('');
@@ -102,10 +105,42 @@ export default function PlayerScreen() {
     });
   };
 
+  const currentAsSpotify: SpotifyTrack = {
+    id: trackId,
+    name: currentTrack.title,
+    artists: currentTrack.artist,
+    album_name: '',
+    images: typeof currentTrack.artwork === 'object' && 'uri' in (currentTrack.artwork as object)
+      ? (currentTrack.artwork as { uri: string }).uri : '',
+    duration_ms: Math.round((status.duration ?? 0) * 1000),
+  };
+
+  const handleGoToArtist = async () => {
+    setOptionsOpen(false);
+    try {
+      const results = await searchArtists(currentTrack.artist, 1);
+      if (results[0]) router.push(`/artist/${results[0].id}` as `/${string}`);
+    } catch {}
+  };
+
+  const handleGoToAlbum = async () => {
+    setOptionsOpen(false);
+    try {
+      const albumQuery = (currentTrack as any).album_name || currentTrack.title;
+      const results = await searchAlbums(`${albumQuery} ${currentTrack.artist}`, 1);
+      if (results[0]) router.push(`/album/${results[0].id}` as `/${string}`);
+    } catch {}
+  };
+
+  const handleShare = () => {
+    setOptionsOpen(false);
+    Share.share({ message: `${currentTrack.title} by ${currentTrack.artist}` });
+  };
+
   return (
     <LinearGradient colors={currentTrack.gradientColors} style={styles.container}>
       <View style={[styles.content, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <Header onBack={() => router.back()} />
+        <Header onBack={() => router.back()} onMore={() => setOptionsOpen(true)} />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -123,16 +158,7 @@ export default function PlayerScreen() {
               downloaded={downloaded}
               downloading={downloading}
               dlProgress={dlProgress}
-              onAddToPlaylist={() => setAddTrack({
-                id: trackId,
-                name: currentTrack.title,
-                artists: currentTrack.artist,
-                album_name: '',
-                images: typeof currentTrack.artwork === 'object' && 'uri' in (currentTrack.artwork as object)
-                  ? (currentTrack.artwork as { uri: string }).uri
-                  : '',
-                duration_ms: Math.round((status.duration ?? 0) * 1000),
-              })}
+              onAddToPlaylist={() => setAddTrack(currentAsSpotify)}
             />
 
             <PlayerControls
@@ -189,6 +215,48 @@ export default function PlayerScreen() {
         onClose={() => setAddTrack(null)}
       />
 
+      {/* ── Track options sheet ── */}
+      <Modal
+        visible={optionsOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setOptionsOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.optionsOverlay}
+          activeOpacity={1}
+          onPress={() => setOptionsOpen(false)}
+        >
+          <View style={styles.optionsSheet}>
+            {/* Track info */}
+            <View style={styles.optionsTrackRow}>
+              <Image
+                source={currentTrack.artwork}
+                style={styles.optionsArt}
+                contentFit="cover"
+              />
+              <View style={styles.optionsTrackInfo}>
+                <Text style={styles.optionsTrackName} numberOfLines={1}>{currentTrack.title}</Text>
+                <Text style={styles.optionsTrackArtist} numberOfLines={1}>{currentTrack.artist}</Text>
+              </View>
+            </View>
+            <View style={styles.optionsDivider} />
+
+            {[
+              { icon: 'add-circle-outline', label: 'Add to playlist', onPress: () => { setOptionsOpen(false); setAddTrack(currentAsSpotify); } },
+              { icon: 'person-outline',     label: 'Go to artist',    onPress: handleGoToArtist },
+              { icon: 'disc-outline',       label: 'Go to album',     onPress: handleGoToAlbum },
+              { icon: 'share-outline',      label: 'Share',           onPress: handleShare },
+            ].map(({ icon, label, onPress }) => (
+              <TouchableOpacity key={label} style={styles.optionRow} onPress={onPress} activeOpacity={0.7}>
+                <Ionicons name={icon as any} size={22} color="#fff" />
+                <Text style={styles.optionLabel}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       <Modal
         visible={!!trackError}
         transparent
@@ -230,6 +298,44 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     width: '100%',
   },
+
+  optionsOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'flex-end',
+  },
+  optionsSheet: {
+    backgroundColor: '#282828',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 36,
+    paddingTop: 8,
+  },
+  optionsTrackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  optionsArt: {
+    width: 46,
+    height: 46,
+    borderRadius: 4,
+    backgroundColor: '#1a1a1a',
+  },
+  optionsTrackInfo: { flex: 1 },
+  optionsTrackName: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  optionsTrackArtist: { color: '#9B9B9B', fontSize: 13, marginTop: 2 },
+  optionsDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: 20, marginBottom: 8 },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 16,
+  },
+  optionLabel: { color: '#fff', fontSize: 15, fontWeight: '500' },
 
   recsSection: {
     marginTop: 32,

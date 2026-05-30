@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import MarqueeText from './MarqueeText';
 
 interface TrackDetailsProps {
   title: string;
@@ -20,8 +21,14 @@ export default function TrackDetails({ title, artist, onDownload, downloaded, do
   return (
     <View style={[styles.trackInfo, isWide && styles.trackInfoWide]}>
       <View style={styles.textBlock}>
-        <Text style={[styles.title, isWide && styles.titleWide]} numberOfLines={1}>{title}</Text>
-        <Text style={[styles.artist, isWide && styles.artistWide]} numberOfLines={1}>{artist}</Text>
+        <MarqueeText
+          text={title}
+          style={[styles.title, isWide && styles.titleWide]}
+          maxWidth={isWide ? 280 : 200}
+        />
+        <Text style={[styles.artist, isWide && styles.artistWide]} numberOfLines={1}>
+          {artist}
+        </Text>
       </View>
       <View style={styles.actions}>
         {onAddToPlaylist && (
@@ -64,11 +71,11 @@ const styles = StyleSheet.create({
     marginTop: 35,
   },
   trackInfoWide: { marginTop: 16 },
-  textBlock: { flex: 1, marginRight: 12 },
+  textBlock: { flex: 1, marginRight: 12, gap: 4 },
   title: { color: 'white', fontSize: 24, fontWeight: 'bold' },
   titleWide: { fontSize: 18 },
-  artist: { color: '#b3b3b3', fontSize: 16, marginTop: 4, fontWeight: '500' },
-  artistWide: { fontSize: 13, marginTop: 2 },
+  artist: { color: '#b3b3b3', fontSize: 16, fontWeight: '500' },
+  artistWide: { fontSize: 13 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   actionBtn: { alignItems: 'center', justifyContent: 'center', minWidth: 28 },
   progressText: { color: '#1DB954', fontSize: 10, fontWeight: '700' },

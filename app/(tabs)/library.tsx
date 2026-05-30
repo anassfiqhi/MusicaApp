@@ -178,9 +178,16 @@ export default function LibraryScreen() {
               <Text style={styles.emptySub}>
                 Tap the download icon on any track to save it for offline playback
               </Text>
-              <TouchableOpacity style={styles.discoverBtn} onPress={() => router.push('/(tabs)/discover')}>
-                <Text style={styles.discoverBtnText}>Browse Discover</Text>
-              </TouchableOpacity>
+              <View style={styles.emptyActions}>
+                <TouchableOpacity style={styles.discoverBtn} onPress={() => router.navigate('/(tabs)')}>
+                  <Ionicons name="compass-outline" size={16} color="#000" />
+                  <Text style={styles.discoverBtnText}>Discover</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.searchBtn} onPress={() => router.navigate('/(tabs)/explore')}>
+                  <Ionicons name="search-outline" size={16} color="#fff" />
+                  <Text style={styles.searchBtnText}>Search</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             <ScrollView
@@ -252,6 +259,21 @@ export default function LibraryScreen() {
                   </TouchableOpacity>
                 );
               })}
+
+              {/* Find more */}
+              <View style={styles.findMoreSection}>
+                <Text style={styles.findMoreTitle}>Find more music to download</Text>
+                <View style={styles.findMoreBtns}>
+                  <TouchableOpacity style={styles.findMoreBtn} onPress={() => router.navigate('/(tabs)')}>
+                    <Ionicons name="compass-outline" size={18} color="#000" />
+                    <Text style={styles.findMoreBtnText}>Discover</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.findMoreBtn, styles.findMoreBtnOutline]} onPress={() => router.navigate('/(tabs)/explore')}>
+                    <Ionicons name="search-outline" size={18} color="#fff" />
+                    <Text style={[styles.findMoreBtnText, styles.findMoreBtnTextOutline]}>Search</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </ScrollView>
           )
         )}
@@ -412,14 +434,57 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { color: 'white', fontSize: 20, fontWeight: '700', textAlign: 'center' },
   emptySub: { color: '#9B9B9B', fontSize: 14, textAlign: 'center' },
+  emptyActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
   discoverBtn: {
-    marginTop: 8,
-    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 24,
     backgroundColor: '#1DB954',
   },
   discoverBtnText: { color: '#000', fontWeight: '700', fontSize: 14 },
+  searchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  searchBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+
+  findMoreSection: {
+    marginTop: 24,
+    marginBottom: 8,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    gap: 14,
+  },
+  findMoreTitle: { color: '#9B9B9B', fontSize: 13, fontWeight: '500' },
+  findMoreBtns: { flexDirection: 'row', gap: 12 },
+  findMoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#1DB954',
+  },
+  findMoreBtnOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  findMoreBtnText: { color: '#000', fontWeight: '700', fontSize: 13 },
+  findMoreBtnTextOutline: { color: '#fff' },
 
   downloadsToolbar: {
     flexDirection: 'row',

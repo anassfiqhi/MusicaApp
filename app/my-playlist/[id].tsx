@@ -217,7 +217,7 @@ export default function MyPlaylistScreen() {
             <Text style={styles.emptySub}>
               Go to Discover or Search to find tracks and add them here
             </Text>
-            <TouchableOpacity style={styles.discoverBtn} onPress={() => router.push('/(tabs)')}>
+            <TouchableOpacity style={styles.discoverBtn} onPress={() => router.navigate('/(tabs)')}>
               <Text style={styles.discoverBtnText}>Browse Discover</Text>
             </TouchableOpacity>
           </View>
@@ -268,7 +268,7 @@ export default function MyPlaylistScreen() {
             {/* Find more */}
             <TouchableOpacity
               style={styles.findMore}
-              onPress={() => router.push('/(tabs)')}
+              onPress={() => router.navigate('/(tabs)')}
               activeOpacity={0.7}
             >
               <View style={styles.findMoreIcon}>

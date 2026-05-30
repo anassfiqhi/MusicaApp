@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -38,6 +38,11 @@ export default function MiniPlayer() {
 
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    translateY.value = 0;
+    opacity.value = 1;
+  }, [currentTrack?.id]);
 
   const openPlayer = () => router.push('/player');
 

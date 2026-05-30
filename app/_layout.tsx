@@ -11,18 +11,21 @@ import MiniPlayer from '@/components/MiniPlayer';
 
 const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 49 : 56;
 
+const HIDE_MINI_PLAYER_ON = new Set(['player']);
+
 function FloatingMiniPlayer() {
   const segments = useSegments();
   const insets = useSafeAreaInsets();
 
-  if (segments[0] === 'player') return null;
+  if (HIDE_MINI_PLAYER_ON.has(segments[0] as string)) return null;
 
-  const bottom = segments[0] === '(tabs)'
+  const isTab = segments[0] === '(tabs)';
+  const bottom = isTab
     ? TAB_BAR_HEIGHT + insets.bottom
-    : insets.bottom + 8;
+    : Math.max(insets.bottom, 16) + 8;
 
   return (
-    <View style={{ position: 'absolute', left: 0, right: 0, bottom, zIndex: 10, elevation: 10 }}>
+    <View style={{ position: 'absolute', left: 0, right: 0, bottom, zIndex: 100, elevation: 100 }}>
       <MiniPlayer />
     </View>
   );
@@ -57,6 +60,14 @@ export default function RootLayout() {
           />
           <Stack.Screen
             name="artist/[id]"
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="browse-search"
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="browse-discover"
             options={{ animation: 'slide_from_right' }}
           />
         </Stack>

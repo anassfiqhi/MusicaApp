@@ -40,9 +40,11 @@ export default function MiniPlayer() {
   const opacity = useSharedValue(1);
 
   useEffect(() => {
-    translateY.value = 0;
-    opacity.value = 1;
-  }, [currentTrack?.id]);
+    if (hasStartedPlayback) {
+      translateY.value = 0;
+      opacity.value = 1;
+    }
+  }, [hasStartedPlayback]);
 
   const openPlayer = () => router.push('/player');
 

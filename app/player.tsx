@@ -22,6 +22,7 @@ import LyricsView from '../components/LyricsView';
 import { useTrackPlayerContext } from '../context/TrackPlayerContext';
 import { useDownloads } from '../context/DownloadsContext';
 import { getRecommendations, getStreamUrl, prefetchTrack, type SpotifyTrack } from '../services/api';
+import AddToPlaylistModal from '../components/AddToPlaylistModal';
 
 function formatDuration(ms: number): string {
   const m = Math.floor(ms / 60000);
@@ -54,6 +55,7 @@ export default function PlayerScreen() {
   } = useTrackPlayerContext();
 
   const { download, isDownloaded, isDownloading, getProgress } = useDownloads();
+  const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
   const [recommendations, setRecommendations] = useState<SpotifyTrack[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const lastFetchedId = useRef<string>('');
@@ -121,6 +123,16 @@ export default function PlayerScreen() {
               downloaded={downloaded}
               downloading={downloading}
               dlProgress={dlProgress}
+              onAddToPlaylist={() => setAddTrack({
+                id: trackId,
+                name: currentTrack.title,
+                artists: currentTrack.artist,
+                album_name: '',
+                images: typeof currentTrack.artwork === 'object' && 'uri' in (currentTrack.artwork as object)
+                  ? (currentTrack.artwork as { uri: string }).uri
+                  : '',
+                duration_ms: Math.round((status.duration ?? 0) * 1000),
+              })}
             />
 
             <PlayerControls
@@ -170,6 +182,12 @@ export default function PlayerScreen() {
           </View>
         </ScrollView>
       </View>
+
+      <AddToPlaylistModal
+        visible={addTrack !== null}
+        track={addTrack}
+        onClose={() => setAddTrack(null)}
+      />
 
       <Modal
         visible={!!trackError}

@@ -9,9 +9,10 @@ interface TrackDetailsProps {
   downloaded?: boolean;
   downloading?: boolean;
   dlProgress?: number;
+  onAddToPlaylist?: () => void;
 }
 
-export default function TrackDetails({ title, artist, onDownload, downloaded, downloading, dlProgress }: TrackDetailsProps) {
+export default function TrackDetails({ title, artist, onDownload, downloaded, downloading, dlProgress, onAddToPlaylist }: TrackDetailsProps) {
   const { width } = useWindowDimensions();
   const isWide = width >= 768;
   const iconSize = isWide ? 22 : 26;
@@ -23,6 +24,15 @@ export default function TrackDetails({ title, artist, onDownload, downloaded, do
         <Text style={[styles.artist, isWide && styles.artistWide]} numberOfLines={1}>{artist}</Text>
       </View>
       <View style={styles.actions}>
+        {onAddToPlaylist && (
+          <TouchableOpacity
+            onPress={onAddToPlaylist}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={styles.actionBtn}
+          >
+            <Ionicons name="add-circle-outline" size={iconSize} color="white" />
+          </TouchableOpacity>
+        )}
         {onDownload !== undefined && (
           <TouchableOpacity
             onPress={() => { if (!downloaded && !downloading) onDownload(); }}

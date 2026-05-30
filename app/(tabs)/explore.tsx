@@ -226,7 +226,6 @@ export default function ExploreScreen() {
 
   const handleTrackPress = useCallback((track: SpotifyTrack) => {
     playSpotifyTrack(track);
-    router.push('/player');
   }, [playSpotifyTrack]);
 
   const handleDownload = useCallback((track: SpotifyTrack) => {

@@ -61,7 +61,6 @@ export default function AlbumScreen() {
     if (!album || album.tracks.length === 0) return;
     console.log(`[album] play from index=${index} in "${album.name}"`);
     playSpotifyPlaylist(album.tracks, index);
-    router.push('/player');
   }, [album, playSpotifyPlaylist]);
 
   const handlePlayAll = useCallback(() => handlePlay(0), [handlePlay]);
@@ -71,7 +70,6 @@ export default function AlbumScreen() {
     console.log(`[album] shuffle ${album.tracks.length} tracks in "${album.name}"`);
     const shuffled = [...album.tracks].sort(() => Math.random() - 0.5);
     playSpotifyPlaylist(shuffled, 0);
-    router.push('/player');
   }, [album, playSpotifyPlaylist]);
 
   const handleDownload = useCallback((track: SpotifyTrack) => {

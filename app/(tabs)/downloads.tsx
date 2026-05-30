@@ -49,7 +49,6 @@ export default function DownloadsScreen() {
 
   const handlePlay = (d: DownloadedTrack) => {
     playLocalTrack(d);
-    router.push('/player');
   };
 
   const handleDelete = (d: DownloadedTrack) => {

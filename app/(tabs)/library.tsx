@@ -66,13 +66,11 @@ export default function LibraryScreen() {
   const handlePlay = (d: DownloadedTrack) => {
     const index = downloads.indexOf(d);
     playLocalPlaylist(downloads, index >= 0 ? index : 0);
-    router.push('/player');
   };
 
   const handleShuffle = () => {
     const shuffled = [...downloads].sort(() => Math.random() - 0.5);
     playLocalPlaylist(shuffled, 0);
-    router.push('/player');
   };
 
   const handleCreatePlaylist = async (name: string) => {
@@ -212,7 +210,6 @@ export default function LibraryScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.playCircleBtn}
-                    onPress={() => { playLocalPlaylist(downloads, 0); router.push('/player'); }}
                   >
                     <Ionicons name="play" size={isWide ? 22 : 26} color="#000" />
                   </TouchableOpacity>

@@ -78,14 +78,12 @@ export default function ArtistScreen() {
   const handlePlayTrack = useCallback((track: SpotifyTrack) => {
     console.log(`[artist] play track id=${track.id} name="${track.name}"`);
     playSpotifyTrack(track);
-    router.push('/player');
   }, [playSpotifyTrack]);
 
   const handlePlayAll = useCallback(() => {
     if (!artist || artist.top_tracks.length === 0) return;
     console.log(`[artist] play all ${artist.top_tracks.length} tracks for "${artist.name}"`);
     playSpotifyPlaylist(artist.top_tracks, 0);
-    router.push('/player');
   }, [artist, playSpotifyPlaylist]);
 
   const handleShuffle = useCallback(() => {
@@ -93,7 +91,6 @@ export default function ArtistScreen() {
     console.log(`[artist] shuffle ${artist.top_tracks.length} tracks for "${artist.name}"`);
     const shuffled = [...artist.top_tracks].sort(() => Math.random() - 0.5);
     playSpotifyPlaylist(shuffled, 0);
-    router.push('/player');
   }, [artist, playSpotifyPlaylist]);
 
   const handleDownload = useCallback((track: SpotifyTrack) => {

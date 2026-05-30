@@ -55,20 +55,17 @@ export default function MyPlaylistScreen() {
   const handlePlay = (index: number) => {
     if (playlist.tracks.length === 0) return;
     playSpotifyPlaylist(playlist.tracks, index);
-    router.push('/player');
   };
 
   const handlePlayAll = () => {
     if (playlist.tracks.length === 0) return;
     playSpotifyPlaylist(playlist.tracks, 0);
-    router.push('/player');
   };
 
   const handleShuffle = () => {
     if (playlist.tracks.length === 0) return;
     const shuffled = [...playlist.tracks].sort(() => Math.random() - 0.5);
     playSpotifyPlaylist(shuffled, 0);
-    router.push('/player');
   };
 
   const handleMore = () => {

@@ -62,20 +62,17 @@ export default function PlaylistScreen() {
 
   const handlePlay = (track: SpotifyTrack, index: number) => {
     playSpotifyPlaylist(tracks, index);
-    router.push('/player');
   };
 
   const handlePlayAll = () => {
     if (tracks.length === 0) return;
     playSpotifyPlaylist(tracks, 0);
-    router.push('/player');
   };
 
   const handleShuffle = () => {
     if (tracks.length === 0) return;
     const shuffled = [...tracks].sort(() => Math.random() - 0.5);
     playSpotifyPlaylist(shuffled, 0);
-    router.push('/player');
   };
 
   const handleDownload = (track: SpotifyTrack) => {

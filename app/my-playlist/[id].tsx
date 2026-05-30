@@ -182,7 +182,7 @@ export default function MyPlaylistScreen() {
             style={styles.moreBtn}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="ellipsis-horizontal-circle-outline" size={32} color="#9B9B9B" />
+            <Ionicons name="ellipsis-horizontal" size={28} color="#9B9B9B" />
           </TouchableOpacity>
 
           <View style={styles.controlsRight}>

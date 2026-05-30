@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -37,12 +38,21 @@ export default function LibraryScreen() {
 
   const { playLocalPlaylist, currentTrack } = useTrackPlayerContext();
   const { downloads, remove } = useDownloads();
-  const { playlists, create: createPlaylist } = usePlaylists();
+  const { playlists, create: createPlaylist, remove: removePlaylist, rename } = usePlaylists();
 
   const [segment, setSegment] = useState<Segment>('playlists');
   const [creatingPlaylist, setCreatingPlaylist] = useState(false);
+  const [renamingPlaylist, setRenamingPlaylist] = useState<{ id: string; name: string } | null>(null);
   const [optionsTrack, setOptionsTrack] = useState<SpotifyTrack | null>(null);
   const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
+
+  const handlePlaylistOptions = (id: string, name: string) => {
+    Alert.alert(name, undefined, [
+      { text: 'Rename', onPress: () => setRenamingPlaylist({ id, name }) },
+      { text: 'Delete', style: 'destructive', onPress: () => removePlaylist(id) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
 
   const toSpotifyTrack = (d: DownloadedTrack): SpotifyTrack => ({
     id: d.id,
@@ -143,7 +153,13 @@ export default function LibraryScreen() {
                         {`Playlist · ${p.tracks.length} ${p.tracks.length === 1 ? 'song' : 'songs'}`}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color="#535353" />
+                    <TouchableOpacity
+                      onPress={(e) => { e.stopPropagation(); handlePlaylistOptions(p.id, p.name); }}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      style={styles.playlistOptionsBtn}
+                    >
+                      <Ionicons name="ellipsis-vertical" size={18} color="#9B9B9B" />
+                    </TouchableOpacity>
                   </TouchableOpacity>
                 ))}
               </>
@@ -264,6 +280,17 @@ export default function LibraryScreen() {
         onCancel={() => setCreatingPlaylist(false)}
         onCreate={handleCreatePlaylist}
       />
+      <CreatePlaylistModal
+        visible={renamingPlaylist !== null}
+        initialName={renamingPlaylist?.name ?? ''}
+        title="Rename playlist"
+        confirmLabel="Save"
+        onCancel={() => setRenamingPlaylist(null)}
+        onCreate={async (newName) => {
+          if (renamingPlaylist) await rename(renamingPlaylist.id, newName);
+          setRenamingPlaylist(null);
+        }}
+      />
     </LinearGradient>
   );
 }
@@ -349,6 +376,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     gap: 12,
+  },
+  playlistOptionsBtn: {
+    padding: 6,
   },
   playlistArt: {
     width: 56,

@@ -34,7 +34,7 @@ export default function TrackDetails({ title, artist, onDownload, downloaded, do
                 ? <Text style={styles.progressText}>{Math.round(dlProgress * 100)}%</Text>
                 : <ActivityIndicator size="small" color="#1DB954" />
             ) : downloaded ? (
-              <Ionicons name="arrow-down-circle" size={iconSize} color="#1DB954" />
+              <Ionicons name="checkmark-circle" size={iconSize} color="#1DB954" />
             ) : (
               <Ionicons name="arrow-down-circle-outline" size={iconSize} color="white" />
             )}

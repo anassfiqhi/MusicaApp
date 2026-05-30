@@ -20,7 +20,8 @@ import TrackDetails from '../components/TrackDetails';
 import PlayerControls from '../components/PlayerControls';
 import LyricsView from '../components/LyricsView';
 import { useTrackPlayerContext } from '../context/TrackPlayerContext';
-import { getRecommendations, prefetchTrack, type SpotifyTrack } from '../services/api';
+import { useDownloads } from '../context/DownloadsContext';
+import { getRecommendations, getStreamUrl, prefetchTrack, type SpotifyTrack } from '../services/api';
 
 function formatDuration(ms: number): string {
   const m = Math.floor(ms / 60000);
@@ -52,6 +53,7 @@ export default function PlayerScreen() {
     playSpotifyPlaylist,
   } = useTrackPlayerContext();
 
+  const { download, isDownloaded, isDownloading, getProgress } = useDownloads();
   const [recommendations, setRecommendations] = useState<SpotifyTrack[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const lastFetchedId = useRef<string>('');
@@ -80,6 +82,24 @@ export default function PlayerScreen() {
 
   if (!currentTrack) return null;
 
+  const trackId = currentTrack.id ?? '';
+  const downloaded = isDownloaded(trackId);
+  const downloading = isDownloading(trackId);
+  const dlProgress = getProgress(trackId);
+
+  const handleDownload = () => {
+    if (!spotifyMode || downloaded || downloading) return;
+    download({
+      id: trackId,
+      title: currentTrack.title,
+      artist: currentTrack.artist,
+      artworkUrl: typeof currentTrack.artwork === 'object' && 'uri' in (currentTrack.artwork as object)
+        ? (currentTrack.artwork as { uri: string }).uri
+        : undefined,
+      audioUrl: getStreamUrl(trackId),
+    });
+  };
+
   return (
     <LinearGradient colors={currentTrack.gradientColors} style={styles.container}>
       <View style={[styles.content, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -94,7 +114,15 @@ export default function PlayerScreen() {
         >
           <View style={[styles.inner, width >= 768 && styles.innerWide]}>
             <AlbumArt source={currentTrack.artwork} />
-            <TrackDetails title={currentTrack.title} artist={currentTrack.artist} />
+            <TrackDetails
+              title={currentTrack.title}
+              artist={currentTrack.artist}
+              onDownload={spotifyMode ? handleDownload : undefined}
+              downloaded={downloaded}
+              downloading={downloading}
+              dlProgress={dlProgress}
+            />
+
             <PlayerControls
               player={player}
               status={status}
@@ -184,6 +212,7 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     width: '100%',
   },
+
   recsSection: {
     marginTop: 32,
   },

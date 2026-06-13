@@ -13,7 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { usePlaylists } from '@/context/PlaylistsContext';
+import { usePlaylists, LIKED_PLAYLIST_ID } from '@/context/PlaylistsContext';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import CreatePlaylistModal from '@/components/CreatePlaylistModal';
 
@@ -37,6 +37,7 @@ export default function MyPlaylistScreen() {
   const [renaming, setRenaming] = useState(false);
 
   const playlist = playlists.find(p => p.id === id);
+  const isLiked = id === LIKED_PLAYLIST_ID;
 
   if (!playlist) {
     return (
@@ -69,6 +70,7 @@ export default function MyPlaylistScreen() {
   };
 
   const handleMore = () => {
+    if (isLiked) return;
     Alert.alert(playlist.name, undefined, [
       { text: 'Rename playlist', onPress: () => setRenaming(true) },
       {
@@ -83,7 +85,7 @@ export default function MyPlaylistScreen() {
   const handleTrackMore = (trackId: string, trackName: string) => {
     Alert.alert(trackName, undefined, [
       {
-        text: 'Remove from playlist',
+        text: isLiked ? 'Unlike' : 'Remove from playlist',
         style: 'destructive',
         onPress: () => removeTrack(playlist.id, trackId),
       },
@@ -146,10 +148,14 @@ export default function MyPlaylistScreen() {
 
     return (
       <LinearGradient
-        colors={['#1a3a28', '#0f2018', '#121212']}
+        colors={isLiked ? ['#2a1a2e', '#1a0f1a', '#121212'] : ['#1a3a28', '#0f2018', '#121212']}
         style={{ width, height: coverH, alignItems: 'center', justifyContent: 'center' }}
       >
-        <Ionicons name="musical-notes" size={80} color="rgba(29,185,84,0.35)" />
+        <Ionicons
+          name={isLiked ? 'heart' : 'musical-notes'}
+          size={80}
+          color={isLiked ? 'rgba(29,185,84,0.5)' : 'rgba(29,185,84,0.35)'}
+        />
       </LinearGradient>
     );
   };
@@ -174,13 +180,15 @@ export default function MyPlaylistScreen() {
 
         {/* Controls */}
         <View style={styles.controls}>
-          <TouchableOpacity
-            onPress={handleMore}
-            style={styles.moreBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="ellipsis-horizontal" size={28} color="#9B9B9B" />
-          </TouchableOpacity>
+          {!isLiked && (
+            <TouchableOpacity
+              onPress={handleMore}
+              style={styles.moreBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="ellipsis-horizontal" size={28} color="#9B9B9B" />
+            </TouchableOpacity>
+          )}
 
           <View style={styles.controlsRight}>
             <TouchableOpacity
@@ -208,11 +216,13 @@ export default function MyPlaylistScreen() {
         {playlist.tracks.length === 0 ? (
           <View style={styles.empty}>
             <View style={styles.emptyArt}>
-              <Ionicons name="musical-notes-outline" size={44} color="#535353" />
+              <Ionicons name={isLiked ? 'heart-outline' : 'musical-notes-outline'} size={44} color="#535353" />
             </View>
             <Text style={styles.emptyTitle}>No tracks yet</Text>
             <Text style={styles.emptySub}>
-              Go to Discover or Search to find tracks and add them here
+              {isLiked
+                ? 'Songs you like will appear here'
+                : 'Go to Discover or Search to find tracks and add them here'}
             </Text>
             <TouchableOpacity style={styles.discoverBtn} onPress={() => router.navigate('/(tabs)')}>
               <Text style={styles.discoverBtnText}>Browse Discover</Text>

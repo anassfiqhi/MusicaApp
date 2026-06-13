@@ -11,9 +11,11 @@ interface TrackDetailsProps {
   downloading?: boolean;
   dlProgress?: number;
   onAddToPlaylist?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-export default function TrackDetails({ title, artist, onDownload, downloaded, downloading, dlProgress, onAddToPlaylist }: TrackDetailsProps) {
+export default function TrackDetails({ title, artist, onDownload, downloaded, downloading, dlProgress, onAddToPlaylist, isFavorite, onToggleFavorite }: TrackDetailsProps) {
   const { width } = useWindowDimensions();
   const isWide = width >= 768;
   const iconSize = isWide ? 22 : 26;
@@ -57,7 +59,17 @@ export default function TrackDetails({ title, artist, onDownload, downloaded, do
             )}
           </TouchableOpacity>
         )}
-        <Ionicons name="heart-outline" size={iconSize} color="white" />
+        <TouchableOpacity
+          onPress={onToggleFavorite}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={styles.actionBtn}
+        >
+          <Ionicons
+            name={isFavorite ? 'heart' : 'heart-outline'}
+            size={iconSize}
+            color={isFavorite ? '#1DB954' : 'white'}
+          />
+        </TouchableOpacity>
       </View>
     </View>
   );

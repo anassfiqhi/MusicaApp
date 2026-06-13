@@ -22,6 +22,7 @@ import PlayerControls from '../components/PlayerControls';
 import LyricsView from '../components/LyricsView';
 import { useTrackPlayerContext } from '../context/TrackPlayerContext';
 import { useDownloads } from '../context/DownloadsContext';
+import { usePlaylists, LIKED_PLAYLIST_ID } from '../context/PlaylistsContext';
 import { getRecommendations, getStreamUrl, searchArtists, searchAlbums, prefetchTrack, type SpotifyTrack } from '../services/api';
 import AddToPlaylistModal from '../components/AddToPlaylistModal';
 import { Ionicons } from '@expo/vector-icons';
@@ -57,6 +58,7 @@ export default function PlayerScreen() {
   } = useTrackPlayerContext();
 
   const { download, isDownloaded, isDownloading, getProgress } = useDownloads();
+  const { isLiked, toggleLike } = usePlaylists();
   const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [recommendations, setRecommendations] = useState<SpotifyTrack[]>([]);
@@ -159,6 +161,8 @@ export default function PlayerScreen() {
               downloading={downloading}
               dlProgress={dlProgress}
               onAddToPlaylist={() => setAddTrack(currentAsSpotify)}
+              isFavorite={isLiked(trackId)}
+              onToggleFavorite={() => toggleLike(currentAsSpotify)}
             />
 
             <PlayerControls

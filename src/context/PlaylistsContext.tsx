@@ -10,6 +10,8 @@ import {
 } from '../services/playlists';
 import type { SpotifyTrack } from '../services/api';
 
+export const LIKED_PLAYLIST_ID = 'pl_liked';
+
 interface PlaylistsContextType {
   playlists: CustomPlaylist[];
   create: (name: string) => Promise<CustomPlaylist>;
@@ -18,6 +20,8 @@ interface PlaylistsContextType {
   addTrack: (playlistId: string, track: SpotifyTrack) => Promise<void>;
   removeTrack: (playlistId: string, trackId: string) => Promise<void>;
   playlistsContaining: (trackId: string) => string[];
+  toggleLike: (track: SpotifyTrack) => Promise<void>;
+  isLiked: (trackId: string) => boolean;
 }
 
 const PlaylistsContext = createContext<PlaylistsContextType | null>(null);
@@ -26,7 +30,16 @@ export function PlaylistsProvider({ children }: { children: React.ReactNode }) {
   const [playlists, setPlaylists] = useState<CustomPlaylist[]>([]);
 
   useEffect(() => {
-    loadPlaylists().then(setPlaylists);
+    loadPlaylists().then(async (loaded) => {
+      const hasLiked = loaded.some(p => p.id === LIKED_PLAYLIST_ID);
+      if (!hasLiked) {
+        const { all } = await createPlaylist('Liked Songs');
+        const withLiked = all.map(p => (p.id === LIKED_PLAYLIST_ID ? { ...p, id: LIKED_PLAYLIST_ID } : p));
+        setPlaylists(withLiked);
+      } else {
+        setPlaylists(loaded);
+      }
+    });
   }, []);
 
   const create = useCallback(async (name: string) => {
@@ -36,10 +49,12 @@ export function PlaylistsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const rename = useCallback(async (id: string, name: string) => {
+    if (id === LIKED_PLAYLIST_ID) return;
     setPlaylists(await renamePlaylist(id, name));
   }, []);
 
   const remove = useCallback(async (id: string) => {
+    if (id === LIKED_PLAYLIST_ID) return;
     setPlaylists(await deletePlaylist(id));
   }, []);
 
@@ -56,8 +71,21 @@ export function PlaylistsProvider({ children }: { children: React.ReactNode }) {
     [playlists]
   );
 
+  const isLiked = useCallback(
+    (trackId: string) => playlistsContaining(trackId).includes(LIKED_PLAYLIST_ID),
+    [playlistsContaining]
+  );
+
+  const toggleLike = useCallback(async (track: SpotifyTrack) => {
+    if (isLiked(track.id)) {
+      await removeTrack(LIKED_PLAYLIST_ID, track.id);
+    } else {
+      await addTrack(LIKED_PLAYLIST_ID, track);
+    }
+  }, [isLiked, removeTrack, addTrack]);
+
   return (
-    <PlaylistsContext.Provider value={{ playlists, create, rename, remove, addTrack, removeTrack, playlistsContaining }}>
+    <PlaylistsContext.Provider value={{ playlists, create, rename, remove, addTrack, removeTrack, playlistsContaining, toggleLike, isLiked }}>
       {children}
     </PlaylistsContext.Provider>
   );

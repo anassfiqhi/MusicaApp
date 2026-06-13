@@ -2,7 +2,7 @@ import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 import CreatePlaylistModal from '@/components/CreatePlaylistModal';
 import TrackOptionsSheet from '@/components/TrackOptionsSheet';
 import { useDownloads } from '@/context/DownloadsContext';
-import { usePlaylists } from '@/context/PlaylistsContext';
+import { usePlaylists, LIKED_PLAYLIST_ID } from '@/context/PlaylistsContext';
 import { useTrackPlayerContext } from '@/context/TrackPlayerContext';
 import type { SpotifyTrack } from '@/services/api';
 import type { DownloadedTrack } from '@/services/downloads';
@@ -47,10 +47,11 @@ export default function LibraryScreen() {
   const [addTrack, setAddTrack] = useState<SpotifyTrack | null>(null);
 
   const handlePlaylistOptions = (id: string, name: string) => {
+    const isLiked = id === LIKED_PLAYLIST_ID;
     Alert.alert(name, undefined, [
-      { text: 'Rename', onPress: () => setRenamingPlaylist({ id, name }) },
-      { text: 'Delete', style: 'destructive', onPress: () => removePlaylist(id) },
-      { text: 'Cancel', style: 'cancel' },
+      ...(isLiked ? [] : [{ text: 'Rename', onPress: () => setRenamingPlaylist({ id, name }) }]),
+      ...(isLiked ? [] : [{ text: 'Delete', style: 'destructive' as const, onPress: () => removePlaylist(id) }]),
+      { text: 'Cancel', style: 'cancel' as const },
     ]);
   };
 
@@ -126,6 +127,27 @@ export default function LibraryScreen() {
               </View>
             ) : (
               <>
+                {/* Liked Songs - pinned at top */}
+                {playlists.find(p => p.id === LIKED_PLAYLIST_ID) && (
+                  <TouchableOpacity
+                    style={styles.playlistRow}
+                    onPress={() => router.push(`/my-playlist/${LIKED_PLAYLIST_ID}`)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.playlistArt, isWide && styles.playlistArtWide, styles.likedPlaylistArt]}>
+                      <Ionicons name="heart" size={isWide ? 22 : 26} color="#1DB954" />
+                    </View>
+                    <View style={styles.playlistInfo}>
+                      <Text style={[styles.playlistName, isWide && styles.playlistNameWide]}>
+                        Liked Songs
+                      </Text>
+                      <Text style={[styles.playlistMeta, isWide && styles.playlistMetaWide]}>
+                        {`Playlist · ${playlists.find(p => p.id === LIKED_PLAYLIST_ID)?.tracks.length ?? 0} ${(playlists.find(p => p.id === LIKED_PLAYLIST_ID)?.tracks.length ?? 0) === 1 ? 'song' : 'songs'}`}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+
                 <TouchableOpacity style={styles.newPlaylistRow} onPress={() => setCreatingPlaylist(true)} activeOpacity={0.7}>
                   <View style={styles.newPlaylistIcon}>
                     <Ionicons name="add" size={24} color="white" />
@@ -133,7 +155,7 @@ export default function LibraryScreen() {
                   <Text style={styles.newPlaylistText}>New Playlist</Text>
                 </TouchableOpacity>
 
-                {playlists.map(p => (
+                {playlists.filter(p => p.id !== LIKED_PLAYLIST_ID).map(p => (
                   <TouchableOpacity
                     key={p.id}
                     style={styles.playlistRow}
@@ -408,6 +430,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   playlistArtWide: { width: 46, height: 46 },
+  likedPlaylistArt: { backgroundColor: 'rgba(29,185,84,0.12)' },
   playlistInfo: { flex: 1 },
   playlistName: { color: 'white', fontSize: 15, fontWeight: '600' },
   playlistNameWide: { fontSize: 13 },

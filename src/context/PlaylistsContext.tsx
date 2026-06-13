@@ -6,6 +6,7 @@ import {
   deletePlaylist,
   addTrackToPlaylist,
   removeTrackFromPlaylist,
+  savePlaylists,
   type CustomPlaylist,
 } from '../services/playlists';
 import type { SpotifyTrack } from '../services/api';
@@ -33,8 +34,11 @@ export function PlaylistsProvider({ children }: { children: React.ReactNode }) {
     loadPlaylists().then(async (loaded) => {
       const hasLiked = loaded.some(p => p.id === LIKED_PLAYLIST_ID);
       if (!hasLiked) {
-        const { all } = await createPlaylist('Liked Songs');
-        const withLiked = all.map(p => (p.id === LIKED_PLAYLIST_ID ? { ...p, id: LIKED_PLAYLIST_ID } : p));
+        const { all: created } = await createPlaylist('Liked Songs');
+        const withLiked = created.map((p, idx) =>
+          idx === 0 ? { ...p, id: LIKED_PLAYLIST_ID } : p
+        );
+        await savePlaylists(withLiked);
         setPlaylists(withLiked);
       } else {
         setPlaylists(loaded);

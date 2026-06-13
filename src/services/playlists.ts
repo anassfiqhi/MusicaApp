@@ -25,6 +25,10 @@ async function write(list: CustomPlaylist[]): Promise<void> {
   await FileSystem.writeAsStringAsync(FILE, JSON.stringify(list));
 }
 
+export async function savePlaylists(list: CustomPlaylist[]): Promise<void> {
+  await write(list);
+}
+
 export async function loadPlaylists(): Promise<CustomPlaylist[]> {
   return read();
 }

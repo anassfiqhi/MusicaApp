@@ -180,7 +180,7 @@ export default function MyPlaylistScreen() {
 
         {/* Controls */}
         <View style={styles.controls}>
-          {!isLiked ? (
+          {!isLiked && (
             <TouchableOpacity
               onPress={handleMore}
               style={styles.moreBtn}
@@ -188,19 +188,8 @@ export default function MyPlaylistScreen() {
             >
               <Ionicons name="ellipsis-horizontal" size={28} color="#9B9B9B" />
             </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.shuffleBtn}
-              onPress={handlePlayAll}
-              disabled={playlist.tracks.length === 0}
-            >
-              <Ionicons
-                name="play-circle"
-                size={28}
-                color={playlist.tracks.length === 0 ? '#535353' : '#1DB954'}
-              />
-            </TouchableOpacity>
           )}
+          {isLiked && <View style={styles.moreBtn} />}
 
           <View style={styles.controlsRight}>
             <TouchableOpacity

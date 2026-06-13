@@ -20,7 +20,10 @@ export default function PlayerControls({ player, status, handlePlayPause, format
   const isWide = width >= 768;
   const [seekValue, setSeekValue] = useState<number | null>(null);
 
-  const displayTime = seekValue ?? status.currentTime;
+  // Validate duration and position - ensure they're positive numbers
+  const validDuration = Math.max(0, Math.abs(status.duration || 0));
+  const validPosition = Math.max(0, Math.abs(status.currentTime ?? 0));
+  const displayTime = seekValue ?? validPosition;
 
   return (
     <>
@@ -28,8 +31,8 @@ export default function PlayerControls({ player, status, handlePlayPause, format
         <Slider
           style={styles.slider}
           minimumValue={0}
-          maximumValue={status.duration || 1}
-          value={seekValue ?? status.currentTime}
+          maximumValue={validDuration || 1}
+          value={seekValue ?? validPosition}
           minimumTrackTintColor={isLoading ? '#535353' : '#1DB954'}
           maximumTrackTintColor="#535353"
           thumbTintColor={isLoading ? 'transparent' : '#1DB954'}
@@ -45,7 +48,7 @@ export default function PlayerControls({ player, status, handlePlayPause, format
             {isLoading ? '--:--' : formatTime(displayTime)}
           </Text>
           <Text style={[styles.timeText, isLoading && styles.timeTextDisabled]}>
-            {isLoading ? '--:--' : formatTime(status.duration)}
+            {isLoading ? '--:--' : formatTime(validDuration)}
           </Text>
         </View>
       </View>

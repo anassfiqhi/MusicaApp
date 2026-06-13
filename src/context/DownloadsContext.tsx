@@ -65,9 +65,21 @@ export function DownloadsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const remove = useCallback(async (trackId: string) => {
-    const updated = await removeDownload(trackId);
-    setDownloads(updated);
-  }, []);
+    try {
+      const track = downloads.find(d => d.id === trackId);
+      const updated = await removeDownload(trackId);
+      setDownloads(updated);
+      if (track) {
+        showToast(`"${track.title}" deleted`, { icon: 'trash-outline', iconColor: '#9B9B9B', duration: 2000 });
+      }
+    } catch (error) {
+      console.error(`[remove] error removing track ${trackId}:`, error);
+      const track = downloads.find(d => d.id === trackId);
+      if (track) {
+        showToast(`Failed to delete "${track.title}"`, { icon: 'alert-circle', iconColor: '#E8115B', duration: 3000 });
+      }
+    }
+  }, [downloads, showToast]);
 
   const isDownloaded = useCallback(
     (trackId: string) => downloads.some((d) => d.id === trackId),

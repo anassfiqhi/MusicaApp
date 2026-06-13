@@ -62,14 +62,6 @@ export default function RootLayout() {
             name="artist/[id]"
             options={{ animation: 'slide_from_right' }}
           />
-          <Stack.Screen
-            name="browse-search"
-            options={{ animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="browse-discover"
-            options={{ animation: 'slide_from_right' }}
-          />
         </Stack>
         <FloatingMiniPlayer />
       </TrackPlayerProvider>

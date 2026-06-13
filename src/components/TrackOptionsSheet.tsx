@@ -10,7 +10,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import type { SpotifyTrack } from '../services/api';
 
-const PLACEHOLDER = require('../assets/images/playlist/album_art.png');
+const PLACEHOLDER = require('@/assets/images/playlist/album_art.png');
 
 interface Option {
   icon: string;

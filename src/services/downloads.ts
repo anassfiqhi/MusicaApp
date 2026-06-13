@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import * as MediaLibrary from 'expo-media-library';
+import * as MediaLibrary from 'expo-media-library/legacy';
 import { getStreamUrl, getLyrics, serverDownloadTrack } from './api';
 import type { Lyric } from '../data/trackData';
 
@@ -138,36 +138,68 @@ export async function removeDownload(trackId: string): Promise<DownloadedTrack[]
   const list = await loadDownloads();
   const entry = list.find((d) => d.id === trackId);
 
-  if (entry) {
-    console.log(`[remove] "${entry.title}"`);
-    console.log(`[remove] filePath:`, entry.filePath);
-    console.log(`[remove] localArtworkPath:`, entry.localArtworkPath);
-    console.log(`[remove] mediaLibraryAssetId:`, entry.mediaLibraryAssetId);
-
-    await Promise.all([
-      // Delete local audio file
-      entry.filePath
-        ? FileSystem.deleteAsync(entry.filePath, { idempotent: true })
-            .then(() => console.log(`[remove] audio file deleted`))
-            .catch((e) => console.warn(`[remove] audio file delete failed:`, e))
-        : Promise.resolve(),
-      // Delete local artwork file
-      entry.localArtworkPath
-        ? FileSystem.deleteAsync(entry.localArtworkPath, { idempotent: true })
-            .then(() => console.log(`[remove] artwork file deleted`))
-            .catch((e) => console.warn(`[remove] artwork file delete failed:`, e))
-        : Promise.resolve(),
-      // Remove from device media library
-      entry.mediaLibraryAssetId
-        ? MediaLibrary.deleteAssetsAsync([entry.mediaLibraryAssetId])
-            .then(() => console.log(`[remove] media library asset deleted`))
-            .catch((e) => console.warn(`[remove] media library delete failed:`, e))
-        : Promise.resolve(),
-    ]);
-  } else {
+  if (!entry) {
     console.warn(`[remove] trackId "${trackId}" not found in index`);
+    return list;
   }
 
+  console.log(`[remove] "${entry.title}"`);
+  console.log(`[remove] filePath:`, entry.filePath);
+  console.log(`[remove] localArtworkPath:`, entry.localArtworkPath);
+  console.log(`[remove] mediaLibraryAssetId:`, entry.mediaLibraryAssetId);
+
+  const errors: string[] = [];
+
+  // Remove from device media library FIRST (this shows the Android permission dialog)
+  // If user denies, we throw error before deleting any files
+  if (entry.mediaLibraryAssetId) {
+    try {
+      console.log(`[remove] Requesting permission to delete from media library...`);
+      await MediaLibrary.deleteAssetsAsync([entry.mediaLibraryAssetId]);
+      console.log(`[remove] media library asset deleted`);
+    } catch (e) {
+      console.warn(`[remove] media library delete failed:`, e);
+      errors.push(`User denied permission to delete file`);
+    }
+  }
+
+  // If media library deletion failed, abort before deleting actual files
+  if (errors.length > 0) {
+    const errorMsg = errors.join('; ');
+    console.error(`[remove] deletion aborted:`, errorMsg);
+    throw new Error(`Deletion aborted: ${errorMsg}`);
+  }
+
+  // Only delete local files AFTER media library permission is granted
+  if (entry.filePath) {
+    try {
+      await FileSystem.deleteAsync(entry.filePath, { idempotent: true });
+      console.log(`[remove] audio file deleted`);
+    } catch (e) {
+      console.warn(`[remove] audio file delete failed:`, e);
+      errors.push(`Failed to delete audio file: ${e}`);
+    }
+  }
+
+  // Delete local artwork file
+  if (entry.localArtworkPath) {
+    try {
+      await FileSystem.deleteAsync(entry.localArtworkPath, { idempotent: true });
+      console.log(`[remove] artwork file deleted`);
+    } catch (e) {
+      console.warn(`[remove] artwork file delete failed:`, e);
+      errors.push(`Failed to delete artwork: ${e}`);
+    }
+  }
+
+  // If there were any file deletion errors, throw them
+  if (errors.length > 0) {
+    const errorMsg = errors.join('; ');
+    console.error(`[remove] file deletion failed:`, errorMsg);
+    throw new Error(`File deletion failed: ${errorMsg}`);
+  }
+
+  // Only update the list if all deletions succeeded
   const updated = list.filter((d) => d.id !== trackId);
   await persistDownloads(updated);
   console.log(`[remove] index updated — ${updated.length} tracks remaining`);

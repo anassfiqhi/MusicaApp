@@ -13,9 +13,10 @@ interface TrackDetailsProps {
   onAddToPlaylist?: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  onArtistPress?: () => void;
 }
 
-export default function TrackDetails({ title, artist, onDownload, downloaded, downloading, dlProgress, onAddToPlaylist, isFavorite, onToggleFavorite }: TrackDetailsProps) {
+export default function TrackDetails({ title, artist, onDownload, downloaded, downloading, dlProgress, onAddToPlaylist, isFavorite, onToggleFavorite, onArtistPress }: TrackDetailsProps) {
   const { width } = useWindowDimensions();
   const isWide = width >= 768;
   const iconSize = isWide ? 22 : 26;
@@ -28,9 +29,11 @@ export default function TrackDetails({ title, artist, onDownload, downloaded, do
           style={[styles.title, isWide && styles.titleWide]}
           maxWidth={isWide ? 280 : 200}
         />
-        <Text style={[styles.artist, isWide && styles.artistWide]} numberOfLines={1}>
-          {artist}
-        </Text>
+        <TouchableOpacity onPress={onArtistPress} disabled={!onArtistPress}>
+          <Text style={[styles.artist, isWide && styles.artistWide]} numberOfLines={1}>
+            {artist}
+          </Text>
+        </TouchableOpacity>
       </View>
       <View style={styles.actions}>
         {onAddToPlaylist && (

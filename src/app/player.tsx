@@ -1,31 +1,32 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  ScrollView,
-  StyleSheet,
-  useWindowDimensions,
-  Text,
-  TouchableOpacity,
   ActivityIndicator,
   Modal,
+  ScrollView,
   Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Image } from 'expo-image';
 
-import Header from '../components/Header';
-import AlbumArt from '../components/AlbumArt';
-import TrackDetails from '../components/TrackDetails';
-import PlayerControls from '../components/PlayerControls';
-import LyricsView from '../components/LyricsView';
-import { useTrackPlayerContext } from '../context/TrackPlayerContext';
-import { useDownloads } from '../context/DownloadsContext';
-import { usePlaylists, LIKED_PLAYLIST_ID } from '../context/PlaylistsContext';
-import { getRecommendations, getStreamUrl, searchArtists, searchAlbums, prefetchTrack, type SpotifyTrack } from '../services/api';
-import AddToPlaylistModal from '../components/AddToPlaylistModal';
 import { Ionicons } from '@expo/vector-icons';
+import AddToPlaylistModal from '../components/AddToPlaylistModal';
+import AlbumArt from '../components/AlbumArt';
+import ArtistsSheet from '../components/ArtistsSheet';
+import Header from '../components/Header';
+import LyricsView from '../components/LyricsView';
+import PlayerControls from '../components/PlayerControls';
+import TrackDetails from '../components/TrackDetails';
+import { useDownloads } from '../context/DownloadsContext';
+import { usePlaylists } from '../context/PlaylistsContext';
+import { useTrackPlayerContext } from '../context/TrackPlayerContext';
+import { getRecommendations, getStreamUrl, prefetchTrack, searchAlbums, searchArtists, type SpotifyTrack } from '../services/api';
 
 function formatDuration(ms: number): string {
   const m = Math.floor(ms / 60000);
@@ -63,6 +64,7 @@ export default function PlayerScreen() {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [recommendations, setRecommendations] = useState<SpotifyTrack[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  const [showArtistList, setShowArtistList] = useState(false);
   const lastFetchedId = useRef<string>('');
 
   const audioUri = (currentTrack?.audioSource as any)?.uri as string | undefined;
@@ -79,7 +81,7 @@ export default function PlayerScreen() {
     setLoadingRecs(true);
     getRecommendations(currentTrack.id, 20)
       .then(setRecommendations)
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingRecs(false));
   }, [currentTrack, spotifyMode]);
 
@@ -119,19 +121,46 @@ export default function PlayerScreen() {
 
   const handleGoToArtist = async () => {
     setOptionsOpen(false);
-    try {
-      const results = await searchArtists(currentTrack.artist, 1);
-      if (results[0]) router.push(`/artist/${results[0].id}` as `/${string}`);
-    } catch {}
+    if (hasMultipleArtists) {
+      setShowArtistList(true);
+    } else {
+      try {
+        const results = await searchArtists(currentTrack.artist, 1);
+        if (results[0]) router.push({ pathname: '/artist/[id]', params: { id: results[0].id } });
+      } catch { }
+    }
   };
+
+  const handleSelectArtist = async (artistName: string, artistId?: string) => {
+    try {
+      if (artistId) {
+        router.push({ pathname: '/artist/[id]', params: { id: artistId } });
+      } else {
+        const results = await searchArtists(artistName, 1);
+        if (results[0]) router.push({ pathname: '/artist/[id]', params: { id: results[0].id } });
+      }
+    } catch { }
+  };
+
+  const parseArtists = (artistString: string): string[] => {
+    if (!artistString) return [];
+    // Handle both comma-separated and other potential separators
+    const parts = artistString.split(/[,&]/).map(a => a.trim()).filter(a => a.length > 0);
+    return parts;
+  };
+
+  const artists = parseArtists(currentTrack.artist);
+  const hasMultipleArtists = artists.length > 1;
+
+  console.log('🎵 Track:', currentTrack.title, '| Artists string:', currentTrack.artist, '| Parsed:', artists, '| Multiple?', hasMultipleArtists);
 
   const handleGoToAlbum = async () => {
     setOptionsOpen(false);
     try {
       const albumQuery = (currentTrack as any).album_name || currentTrack.title;
       const results = await searchAlbums(`${albumQuery} ${currentTrack.artist}`, 1);
-      if (results[0]) router.push(`/album/${results[0].id}` as `/${string}`);
-    } catch {}
+      if (results[0]) router.push({ pathname: '/album/[id]', params: { id: results[0].id } });
+    } catch { }
   };
 
   const handleShare = () => {
@@ -163,6 +192,14 @@ export default function PlayerScreen() {
               onAddToPlaylist={() => setAddTrack(currentAsSpotify)}
               isFavorite={isLiked(trackId)}
               onToggleFavorite={() => toggleLike(currentAsSpotify)}
+              onArtistPress={() => {
+                console.log('👤 Artist pressed! hasMultipleArtists:', hasMultipleArtists);
+                if (hasMultipleArtists) {
+                  setShowArtistList(true);
+                } else {
+                  handleGoToArtist();
+                }
+              }}
             />
 
             <PlayerControls
@@ -248,9 +285,9 @@ export default function PlayerScreen() {
 
             {[
               { icon: 'add-circle-outline', label: 'Add to playlist', onPress: () => { setOptionsOpen(false); setAddTrack(currentAsSpotify); } },
-              { icon: 'person-outline',     label: 'Go to artist',    onPress: handleGoToArtist },
-              { icon: 'disc-outline',       label: 'Go to album',     onPress: handleGoToAlbum },
-              { icon: 'share-outline',      label: 'Share',           onPress: handleShare },
+              { icon: 'person-outline', label: 'Go to artist', onPress: handleGoToArtist },
+              { icon: 'disc-outline', label: 'Go to album', onPress: handleGoToAlbum },
+              { icon: 'share-outline', label: 'Share', onPress: handleShare },
             ].map(({ icon, label, onPress }) => (
               <TouchableOpacity key={label} style={styles.optionRow} onPress={onPress} activeOpacity={0.7}>
                 <Ionicons name={icon as any} size={22} color="#fff" />
@@ -277,6 +314,14 @@ export default function PlayerScreen() {
           </View>
         </View>
       </Modal>
+
+      <ArtistsSheet
+        visible={showArtistList}
+        artists={artists}
+        trackId={trackId}
+        onClose={() => setShowArtistList(false)}
+        onSelectArtist={handleSelectArtist}
+      />
     </LinearGradient>
   );
 }

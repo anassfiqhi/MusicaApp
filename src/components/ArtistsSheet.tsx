@@ -82,10 +82,12 @@ export default function ArtistsSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, artists.join(','), trackId]);
 
+  const isScrollable = artistsData.length > 3;
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
-      <View style={styles.sheet}>
+      <View style={[styles.sheet, isScrollable && styles.sheetScrollable]}>
         <View style={styles.handle} />
 
         <View style={styles.header}>
@@ -130,7 +132,7 @@ export default function ArtistsSheet({
                 <Text style={styles.artistName} numberOfLines={1}>{item.name}</Text>
               </TouchableOpacity>
             )}
-            scrollEnabled={artistsData.length > 5}
+            scrollEnabled={artistsData.length > 3}
             contentContainerStyle={styles.listContent}
             scrollEventThrottle={16}
           />
@@ -147,6 +149,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     paddingBottom: 40,
+  },
+  sheetScrollable: {
+    maxHeight: '60%',
   },
   handle: {
     width: 36,

@@ -9,6 +9,8 @@ import {
   RefreshControl,
   useWindowDimensions,
   FlatList,
+  Modal,
+  Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +18,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getHomeFeed, getPlaylistCover, type FeedCategory, type PlaylistRef } from '@/services/api';
+import { useSession, signOut } from '@/utils/authClient';
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -145,6 +148,8 @@ export default function DiscoverScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [greeting] = useState(getGreeting);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const { data: session } = useSession();
 
   const fetchFeed = useCallback(async () => {
     try {
@@ -175,6 +180,24 @@ export default function DiscoverScreen() {
     setRefreshing(false);
   }, [fetchFeed]);
 
+  const handleLogout = async () => {
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+      {
+        text: 'Log Out',
+        onPress: async () => {
+          try {
+            await signOut();
+            router.replace('/(auth)/login');
+          } catch (error) {
+            Alert.alert('Error', 'Failed to log out');
+          }
+        },
+        style: 'destructive',
+      },
+    ]);
+  };
+
   // Layout constants
   const cardSize = 152;
   const quickColGap = 10;
@@ -196,9 +219,13 @@ export default function DiscoverScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.greeting}>{greeting}</Text>
-          <View style={styles.avatar}>
+          <TouchableOpacity
+            style={styles.avatar}
+            onPress={() => setShowProfileModal(true)}
+            activeOpacity={0.7}
+          >
             <Ionicons name="person" size={18} color="#fff" />
-          </View>
+          </TouchableOpacity>
         </View>
 
         {loading ? (
@@ -258,6 +285,50 @@ export default function DiscoverScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* Profile Modal */}
+      <Modal
+        visible={showProfileModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowProfileModal(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setShowProfileModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Account</Text>
+              <View style={{ width: 24 }} />
+            </View>
+
+            {session ? (
+              <>
+                <View style={styles.profileSection}>
+                  <View style={styles.profileAvatar}>
+                    <Ionicons name="person" size={40} color="#fff" />
+                  </View>
+                  <Text style={styles.userName}>{session.user?.name || 'User'}</Text>
+                  <Text style={styles.userEmail}>{session.user?.email || ''}</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.logoutBtn}
+                  onPress={handleLogout}
+                >
+                  <Ionicons name="log-out" size={20} color="#fff" />
+                  <Text style={styles.logoutBtnText}>Log Out</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={styles.profileSection}>
+                <Text style={styles.notLoggedIn}>Not logged in</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -409,7 +480,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   cardFallback: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#282828',
@@ -421,5 +492,72 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingBottom: 10,
     lineHeight: 17,
+  },
+
+  // Modal
+  modalContent: {
+    marginTop: 'auto',
+    backgroundColor: '#1E1E1E',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    paddingTop: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  profileSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  profileAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#1DB954',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  userName: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  userEmail: {
+    color: '#B3B3B3',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  notLoggedIn: {
+    color: '#B3B3B3',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+    borderColor: '#FF4444',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  logoutBtnText: {
+    color: '#FF4444',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

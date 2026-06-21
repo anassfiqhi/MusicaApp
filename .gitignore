@@ -45,3 +45,6 @@ app-example
 /ios
 /android
 .env
+
+# Implementation plans (local development)
+*_PLAN.md
